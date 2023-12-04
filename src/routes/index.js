@@ -1,10 +1,9 @@
 import express from "express";
 
-import userRoutes from "./user.route.js";
+import attendanceRoutes from "./attendance.route.js";
 
 const router = express.Router();
 
-router.use("/api/user", userRoutes);
+router.use("/api/attendance", attendanceRoutes);
 
 export default router;
-
