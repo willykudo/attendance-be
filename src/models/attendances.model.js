@@ -93,7 +93,3 @@ attendanceSchema.methods.toJSON = function () {
 
 const AttendancesModel = mongoose.model("Attendances", attendanceSchema);
 export default AttendancesModel;
-
-// type: mongoose.Schema.Types.ObjectId,
-//       required: true,
-//       ref: "Organization",

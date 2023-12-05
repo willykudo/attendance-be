@@ -53,7 +53,7 @@ class BaseController {
     const updatedData = req.body;
     try {
       const result = await this.model.findOneAndUpdate(
-        { _id: id },
+        { uId: id },
         updatedData,
         { new: true }
       );

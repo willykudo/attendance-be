@@ -1,4 +1,5 @@
 import express from "express";
+
 import attendancesController from "../controllers/attendance.controller.js";
 
 const attendanceRoutes = express.Router();
@@ -25,6 +26,10 @@ attendanceRoutes.put("/return/:id", async (req, res, next) => {
 
 attendanceRoutes.delete("/:id", async (req, res, next) => {
   await attendancesController.delete(req, res, next);
+});
+
+attendanceRoutes.get("/:id", async (req, res, next) => {
+  await attendancesController.get_by_id(req, res, next);
 });
 
 export default attendanceRoutes;

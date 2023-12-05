@@ -248,6 +248,22 @@ class AttendancesController extends BaseController {
       next(error);
     }
   }
+
+  async get_by_id(req, res, next) {
+    const { id } = req.params;
+
+    try {
+      const attendanceRecord = await AttendancesModel.findOne({ uId: id });
+
+      if (!attendanceRecord) {
+        throw customizeError(400, "Attendance record not found");
+      }
+
+      res.status(200).json({ data: attendanceRecord });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 const attendancesController = new AttendancesController();
