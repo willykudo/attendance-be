@@ -22,6 +22,18 @@ const attendanceSchema = mongoose.Schema(
       type: String,
       required: true,
     },
+    name: {
+      type: String,
+    },
+    position: {
+      type: String,
+    },
+    location: {
+      type: String,
+    },
+    department: {
+      type: String,
+    },
     punchIn: {
       type: Date,
     },
@@ -37,10 +49,10 @@ const attendanceSchema = mongoose.Schema(
           type: Date,
         },
         breakImage: {
-          type: Buffer,
+          type: String,
         },
         returnImage: {
-          type: Buffer,
+          type: String,
         },
         breakDesc: {
           type: String,
@@ -57,10 +69,10 @@ const attendanceSchema = mongoose.Schema(
       type: String,
     },
     punchInImage: {
-      type: Buffer,
+      type: String,
     },
     punchOutImage: {
-      type: Buffer,
+      type: String,
     },
     punchInDesc: {
       type: String,
@@ -70,11 +82,12 @@ const attendanceSchema = mongoose.Schema(
     },
     status: {
       type: String,
+      enum: ["Pending", "Approved", "Rejected"],
     },
   },
   {
     timestamps: true,
-    versionkey: false,
+    versionKey: false,
   }
 );
 

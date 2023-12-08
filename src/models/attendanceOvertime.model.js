@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 
 import { v4 } from "uuid";
 
-const attendanceRequestSchema = mongoose.Schema(
+const attendanceOvertimeSchema = mongoose.Schema(
   {
     uId: {
       type: String,
@@ -10,27 +10,16 @@ const attendanceRequestSchema = mongoose.Schema(
       unique: true,
       default: v4(),
     },
-    scheduleID: {
-      type: String,
-      required: true,
-    },
     attendanceID: {
       type: String,
       required: true,
+      ref: "Attendances",
     },
-    punchInDate: {
-      type: Date,
+    overtimeDuration: {
+      type: Number,
       required: true,
     },
-    punchOutDate: {
-      type: Date,
-      required: true,
-    },
-    punchInTime: {
-      type: Date,
-      required: true,
-    },
-    punchOutTime: {
+    overtimeDate: {
       type: Date,
       required: true,
     },
@@ -40,11 +29,13 @@ const attendanceRequestSchema = mongoose.Schema(
     status: {
       isHr: {
         type: String,
-        default: "Pending",
       },
       isManager: {
         type: String,
-        default: "Pending",
+      },
+      isDefault: {
+        type: String,
+        default: "pending",
       },
     },
   },
@@ -54,9 +45,9 @@ const attendanceRequestSchema = mongoose.Schema(
   }
 );
 
-const AttendanceRequestModel = mongoose.model(
-  "AttendanceRequest",
-  attendanceRequestSchema
+const AttendanceOvertime = mongoose.model(
+  "AttendanceOvertime",
+  attendanceOvertimeSchema
 );
 
-export default AttendanceRequestModel;
+export default AttendanceOvertime;

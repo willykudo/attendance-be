@@ -2,9 +2,7 @@ import AttendancesModel from "../models/attendances.model.js";
 import BaseController from "./base.controller.js";
 import { customizeError } from "../utils/common.js";
 
-import { v4 } from "uuid";
-
-import multer from "multer";
+import mockData from "../utils/mockData.js";
 
 class AttendancesController extends BaseController {
   constructor() {
@@ -13,10 +11,18 @@ class AttendancesController extends BaseController {
 
   async punch_in(req, res, next) {
     try {
+      const mockDataResult = await mockData();
+
       const newData = {
         ...req.body,
+        employeeID: mockDataResult[0].employee.employee1.employeeID,
+        scheduleID: mockDataResult[1].schedules.morning.uId,
+        organizationID: mockDataResult[2].company.uId,
+        location: mockDataResult[2].company.location,
+        name: mockDataResult[0].employee.employee1.name,
+        position: mockDataResult[0].employee.employee1.position,
+        department: mockDataResult[0].employee.employee1.department,
         punchIn: new Date(),
-        punchInImage: req.file ? req.file.buffer : undefined,
       };
 
       const createdData = await AttendancesModel.create(newData);
@@ -170,11 +176,8 @@ class AttendancesController extends BaseController {
       await attendanceRecord.save();
 
       res.status(200).json({
-        message: "Return from break added successfully",
-        break: {
-          ...lastReturn,
-          returnDesc: lastReturn.returnDesc,
-        },
+        message: "Return from break recorded successfully",
+        return: lastReturn,
       });
     } catch (error) {
       next(error);
@@ -192,6 +195,31 @@ class AttendancesController extends BaseController {
       }
 
       res.status(200).json({ data: attendanceRecord });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async get_by_query(req, res, next) {
+    try {
+      const { name, location, department } = req.query;
+      const query = {};
+
+      if (name) query.name = name;
+      if (location) query.location = location;
+      if (department) query.department = department;
+
+      if (!query) {
+        throw customizeError(400, "Invalid query parameters");
+      }
+
+      const attendances = await AttendancesModel.find(query);
+
+      if (!attendances || attendances.length === 0) {
+        throw customizeError(400, "Attendance record not found");
+      }
+
+      res.status(200).json({ attendances });
     } catch (error) {
       next(error);
     }

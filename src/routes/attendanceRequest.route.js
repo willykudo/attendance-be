@@ -16,7 +16,7 @@ attendanceRequestRoutes.put("/:id", async (req, res, next) => {
   await attendanceRequestController.update(req, res, next);
 });
 
-attendanceRequestRoutes.get("/all", async (req, res, next) => {
+attendanceRequestRoutes.get("/", async (req, res, next) => {
   await attendanceRequestController.getAll(req, res, next);
 });
 

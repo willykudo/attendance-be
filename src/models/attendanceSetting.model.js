@@ -36,10 +36,6 @@ const attendanceSettingSchema = mongoose.Schema(
     },
     overtimeRounding: [
       {
-        uId: {
-          type: String,
-          required: true,
-        },
         from: {
           type: Number,
           required: true,
@@ -56,10 +52,6 @@ const attendanceSettingSchema = mongoose.Schema(
     ],
     overtimeMultipler: [
       {
-        uId: {
-          type: String,
-          required: true,
-        },
         from: {
           type: Number,
           required: true,

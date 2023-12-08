@@ -21,9 +21,9 @@ attendanceRoutes.post("/punch-in", upload, async (req, res, next) => {
   await attendancesController.punch_in(req, res, next);
 });
 
-attendanceRoutes.get("/", async (req, res, next) => {
-  await attendancesController.getAll(req, res, next);
-});
+// attendanceRoutes.get("/", async (req, res, next) => {
+//   await attendancesController.getAll(req, res, next);
+// });
 
 attendanceRoutes.put("/punch-out/:id", upload, async (req, res, next) => {
   await attendancesController.punch_out(req, res, next);
@@ -43,6 +43,10 @@ attendanceRoutes.delete("/:id", async (req, res, next) => {
 
 attendanceRoutes.get("/:id", async (req, res, next) => {
   await attendancesController.get_by_id(req, res, next);
+});
+
+attendanceRoutes.get("/", async (req, res, next) => {
+  await attendancesController.get_by_query(req, res, next);
 });
 
 export default attendanceRoutes;
