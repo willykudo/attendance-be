@@ -29,13 +29,13 @@ const attendanceOvertimeSchema = mongoose.Schema(
     status: {
       isHr: {
         type: String,
+        enum: ["Pending", "Approved", "Rejected"],
+        default: "Pending",
       },
       isManager: {
         type: String,
-      },
-      isDefault: {
-        type: String,
-        default: "pending",
+        enum: ["Pending", "Approved", "Rejected"],
+        default: "Pending",
       },
     },
   },

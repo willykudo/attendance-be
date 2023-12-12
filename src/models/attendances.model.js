@@ -82,7 +82,6 @@ const attendanceSchema = mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["Pending", "Approved", "Rejected"],
     },
   },
   {
@@ -90,22 +89,6 @@ const attendanceSchema = mongoose.Schema(
     versionKey: false,
   }
 );
-
-attendanceSchema.methods.toJSON = function () {
-  const attendance = this;
-  const attendanceObject = attendance.toObject();
-
-  delete attendanceObject.punchInImage;
-  delete attendanceObject.punchOutImage;
-
-  // Loop through breaks array and delete breakImage and returnImage from each break
-  attendanceObject.breaks.forEach((breakItem) => {
-    delete breakItem.breakImage;
-    delete breakItem.returnImage;
-  });
-
-  return attendanceObject;
-};
 
 const AttendancesModel = mongoose.model("Attendances", attendanceSchema);
 export default AttendancesModel;

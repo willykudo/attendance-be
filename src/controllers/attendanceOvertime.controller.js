@@ -14,9 +14,7 @@ class AttendanceOvertimeController extends BaseController {
         uId: attendanceID,
       });
 
-      if (!attendanceRecord) {
-        return res.status(404).json({ error: "Attendance record not found" });
-      }
+      console.log(attendanceRecord);
 
       const punchOut = new Date(attendanceRecord.punchOut);
       const punchIn = new Date(attendanceRecord.punchIn);
@@ -45,28 +43,49 @@ class AttendanceOvertimeController extends BaseController {
 
   async get_by_query(req, res, next) {
     try {
-      const { name, location, department } = req.query;
-      const query = {};
+      const projection = {
+        $project: {
+          _id: 0,
+          uId: 1,
+          attendanceID: 1,
+          overtimeDuration: 1,
+          overtimeDate: 1,
+          notes: 1,
+          status: 1,
+          "attendanceDetails.location": 1,
+          "attendanceDetails.department": 1,
+          "attendanceDetails.name": 1,
+        },
+      };
+      const result = await AttendanceOvertime.aggregate([
+        {
+          $lookup: {
+            from: "attendances",
+            localField: "attendanceID",
+            foreignField: "uId",
+            as: "attendanceDetails",
+          },
+        },
+        {
+          $match: {
+            "attendanceDetails.location": {
+              $regex: new RegExp(req.query.location, "i"), // Case-insensitive match
+            },
+            "attendanceDetails.department": {
+              $regex: new RegExp(req.query.department, "i"), // Case-insensitive match
+            },
+            "attendanceDetails.name": {
+              $regex: new RegExp(req.query.name, "i"), // Case-insensitive match
+            },
+          },
+        },
+        projection,
+      ]);
 
-      if (name) query.name = name;
-
-      if (location) query.location = location;
-
-      if (department) query.department = department;
-
-      console.log("locations:", location);
-      console.log("query:", query);
-
-      const overtimeList = await AttendanceOvertime.find(query)
-        .populate({
-          path: "attendanceID",
-          model: "Attendances",
-          select: "location",
-        })
-        .exec();
+      console.log(result);
 
       return res.status(200).json({
-        data: overtimeList,
+        data: result,
       });
     } catch (error) {
       next(error);

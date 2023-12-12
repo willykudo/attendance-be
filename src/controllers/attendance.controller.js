@@ -3,6 +3,7 @@ import BaseController from "./base.controller.js";
 import { customizeError } from "../utils/common.js";
 
 import mockData from "../utils/mockData.js";
+import { uploadFile } from "../utils/aws.js";
 
 class AttendancesController extends BaseController {
   constructor() {
@@ -13,16 +14,19 @@ class AttendancesController extends BaseController {
     try {
       const mockDataResult = await mockData();
 
+      const upload = await uploadFile(req.file);
+
       const newData = {
         ...req.body,
-        employeeID: mockDataResult[0].employee.employee1.employeeID,
+        employeeID: mockDataResult[0].employee.employee3.employeeID,
         scheduleID: mockDataResult[1].schedules.morning.uId,
         organizationID: mockDataResult[2].company.uId,
         location: mockDataResult[2].company.location,
-        name: mockDataResult[0].employee.employee1.name,
-        position: mockDataResult[0].employee.employee1.position,
-        department: mockDataResult[0].employee.employee1.department,
+        name: mockDataResult[0].employee.employee3.name,
+        position: mockDataResult[0].employee.employee3.position,
+        department: mockDataResult[0].employee.employee3.department,
         punchIn: new Date(),
+        punchInImage: upload.Location,
       };
 
       const createdData = await AttendancesModel.create(newData);
@@ -42,6 +46,7 @@ class AttendancesController extends BaseController {
 
     try {
       const attendanceRecord = await AttendancesModel.findOne({ uId: id });
+      const upload = await uploadFile(req.file);
 
       if (!attendanceRecord) {
         throw customizeError(400, "Attendance record not found");
@@ -57,6 +62,7 @@ class AttendancesController extends BaseController {
       attendanceRecord.punchOutGps = req.body.punchOutGps;
       attendanceRecord.punchOut = punchOutTime;
       attendanceRecord.status = status;
+      attendanceRecord.punchOutImage = upload.Location;
 
       await attendanceRecord.save();
 
@@ -129,9 +135,12 @@ class AttendancesController extends BaseController {
     const { id } = req.params;
 
     try {
+      const upload = await uploadFile(req.file);
+
       const newBreak = {
         ...req.body,
         breakTime: new Date(),
+        breakImage: upload.Location,
       };
 
       //insert the data to the breaks array
@@ -158,6 +167,7 @@ class AttendancesController extends BaseController {
 
     try {
       const attendanceRecord = await AttendancesModel.findOne({ uId: id });
+      const upload = await uploadFile(req.file);
 
       if (!attendanceRecord) {
         throw customizeError(400, "Attendance record not found");
@@ -172,6 +182,7 @@ class AttendancesController extends BaseController {
 
       lastReturn.returnFromBreak = new Date();
       lastReturn.returnDesc = req.body.returnDesc;
+      lastReturn.returnImage = upload.Location;
 
       await attendanceRecord.save();
 

@@ -1,41 +1,41 @@
 import express from "express";
 
 import attendancesController from "../controllers/attendance.controller.js";
-
-import multer from "multer";
-
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, "uploads");
-  },
-  filename: (req, file, cb) => {
-    cb(null, file.originalname);
-  },
-});
-
-const upload = multer({ storage: storage }).single("image");
+import { upload } from "../utils/aws.js";
 
 const attendanceRoutes = express.Router();
 
-attendanceRoutes.post("/punch-in", upload, async (req, res, next) => {
-  await attendancesController.punch_in(req, res, next);
-});
+attendanceRoutes.post(
+  "/punch-in",
+  upload.single("punchInImage"),
+  async (req, res, next) => {
+    await attendancesController.punch_in(req, res, next);
+  }
+);
 
-// attendanceRoutes.get("/", async (req, res, next) => {
-//   await attendancesController.getAll(req, res, next);
-// });
+attendanceRoutes.put(
+  "/punch-out/:id",
+  upload.single("punchOutImage"),
+  async (req, res, next) => {
+    await attendancesController.punch_out(req, res, next);
+  }
+);
 
-attendanceRoutes.put("/punch-out/:id", upload, async (req, res, next) => {
-  await attendancesController.punch_out(req, res, next);
-});
+attendanceRoutes.put(
+  "/break/:id",
+  upload.single("breakImage"),
+  async (req, res, next) => {
+    await attendancesController.break(req, res, next);
+  }
+);
 
-attendanceRoutes.put("/break/:id", upload, async (req, res, next) => {
-  await attendancesController.break(req, res, next);
-});
-
-attendanceRoutes.put("/return/:id", upload, async (req, res, next) => {
-  await attendancesController.return_from_break(req, res, next);
-});
+attendanceRoutes.put(
+  "/return/:id",
+  upload.single("returnImage"),
+  async (req, res, next) => {
+    await attendancesController.return_from_break(req, res, next);
+  }
+);
 
 attendanceRoutes.delete("/:id", async (req, res, next) => {
   await attendancesController.delete(req, res, next);
