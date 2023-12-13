@@ -5,7 +5,7 @@ import attendanceRequestController from "../controllers/attendanceRequest.contro
 const attendanceRequestRoutes = express.Router();
 
 attendanceRequestRoutes.post("/create", async (req, res, next) => {
-  await attendanceRequestController.create(req, res, next);
+  await attendanceRequestController.create_request(req, res, next);
 });
 
 attendanceRequestRoutes.delete("/:id", async (req, res, next) => {
@@ -13,7 +13,7 @@ attendanceRequestRoutes.delete("/:id", async (req, res, next) => {
 });
 
 attendanceRequestRoutes.put("/:id", async (req, res, next) => {
-  await attendanceRequestController.update(req, res, next);
+  await attendanceRequestController.update_status(req, res, next);
 });
 
 attendanceRequestRoutes.get("/", async (req, res, next) => {

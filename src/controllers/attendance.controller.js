@@ -16,13 +16,23 @@ class AttendancesController extends BaseController {
 
       const upload = await uploadFile(req.file);
 
+      const lastAttendance = await AttendancesModel.findOne({
+        employeeID: mockDataResult[0].employee.employee3.employeeID, // in the future use employeeID from the token
+      }).sort({ punchIn: -1 });
+
+      if (lastAttendance && !lastAttendance.punchOut) {
+        throw customizeError(
+          400,
+          "Cannot punch in. Last record doesn't have a punch out."
+        );
+      }
+
       const newData = {
         ...req.body,
         employeeID: mockDataResult[0].employee.employee3.employeeID,
         scheduleID: mockDataResult[1].schedules.morning.uId,
         organizationID: mockDataResult[2].company.uId,
         location: mockDataResult[2].company.location,
-        name: mockDataResult[0].employee.employee3.name,
         position: mockDataResult[0].employee.employee3.position,
         department: mockDataResult[0].employee.employee3.department,
         punchIn: new Date(),
@@ -137,26 +147,36 @@ class AttendancesController extends BaseController {
     try {
       const upload = await uploadFile(req.file);
 
+      const attendanceRecord = await AttendancesModel.findOne({ uId: id });
+      const lastReturn =
+        attendanceRecord.breaks[attendanceRecord.breaks.length - 1];
+
       const newBreak = {
         ...req.body,
         breakTime: new Date(),
         breakImage: upload.Location,
       };
 
-      //insert the data to the breaks array
-      const updatedAttendance = await AttendancesModel.findOneAndUpdate(
-        { uId: id },
-        { $push: { breaks: newBreak } },
-        { new: true }
-      );
+      // If there are no breaks or the last break has a returnFromBreak, allow the break
+      if (!attendanceRecord.breaks.length || lastReturn.returnFromBreak) {
+        const updatedAttendance = await AttendancesModel.findOneAndUpdate(
+          { uId: id },
+          { $push: { breaks: newBreak } },
+          { new: true }
+        );
 
-      if (!updatedAttendance) {
-        throw customizeError(400, "Attendance record not found");
+        if (!updatedAttendance) {
+          throw customizeError(400, "Attendance record not found");
+        }
+        res
+          .status(200)
+          .json({ message: "Break added successfully", break: newBreak });
+      } else {
+        throw customizeError(
+          400,
+          "Can't add break, please return from break first"
+        );
       }
-
-      res
-        .status(200)
-        .json({ message: "Break added successfully", break: newBreak });
     } catch (error) {
       next(error);
     }

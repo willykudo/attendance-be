@@ -13,7 +13,7 @@ attendanceOvertimeRoutes.get("/", async (req, res, next) => {
 });
 
 attendanceOvertimeRoutes.put("/:id", async (req, res, next) => {
-  await attendanceOvertime.update(req, res, next);
+  await attendanceOvertime.update_status(req, res, next);
 });
 
 attendanceOvertimeRoutes.delete("/:id", async (req, res, next) => {

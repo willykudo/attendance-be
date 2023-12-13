@@ -22,9 +22,6 @@ const attendanceSchema = mongoose.Schema(
       type: String,
       required: true,
     },
-    name: {
-      type: String,
-    },
     position: {
       type: String,
     },

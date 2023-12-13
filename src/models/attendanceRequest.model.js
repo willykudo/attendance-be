@@ -17,6 +17,7 @@ const attendanceRequestSchema = mongoose.Schema(
     attendanceID: {
       type: String,
       required: true,
+      ref: "Attendances",
     },
     punchInDate: {
       type: Date,
@@ -37,14 +38,26 @@ const attendanceRequestSchema = mongoose.Schema(
     notes: {
       type: String,
     },
-    status: {
+    approvalStatus: {
       isHr: {
-        type: String,
-        default: "Pending",
+        status: {
+          enum: ["Pending", "Approved", "Rejected"],
+          type: String,
+          default: "Pending",
+        },
+        comment: {
+          type: String,
+        },
       },
       isManager: {
-        type: String,
-        default: "Pending",
+        status: {
+          enum: ["Pending", "Approved", "Rejected"],
+          type: String,
+          default: "Pending",
+        },
+        comment: {
+          type: String,
+        },
       },
     },
   },

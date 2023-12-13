@@ -14,12 +14,12 @@ class AttendanceOvertimeController extends BaseController {
         uId: attendanceID,
       });
 
-      console.log(attendanceRecord);
-
       const punchOut = new Date(attendanceRecord.punchOut);
       const punchIn = new Date(attendanceRecord.punchIn);
 
-      const totalHoursWorked = (punchOut - punchIn) / (1000 * 60 * 60);
+      const totalHoursWorked = Number(
+        ((punchOut - punchIn) / (1000 * 60 * 60)).toFixed(1)
+      );
 
       const newData = {
         ...req.body,
@@ -54,7 +54,6 @@ class AttendanceOvertimeController extends BaseController {
           status: 1,
           "attendanceDetails.location": 1,
           "attendanceDetails.department": 1,
-          "attendanceDetails.name": 1,
         },
       };
       const result = await AttendanceOvertime.aggregate([
@@ -69,23 +68,57 @@ class AttendanceOvertimeController extends BaseController {
         {
           $match: {
             "attendanceDetails.location": {
-              $regex: new RegExp(req.query.location, "i"), // Case-insensitive match
+              $regex: new RegExp(req.query.location, "i"),
             },
             "attendanceDetails.department": {
-              $regex: new RegExp(req.query.department, "i"), // Case-insensitive match
-            },
-            "attendanceDetails.name": {
-              $regex: new RegExp(req.query.name, "i"), // Case-insensitive match
+              $regex: new RegExp(req.query.department, "i"),
             },
           },
         },
         projection,
       ]);
 
-      console.log(result);
-
       return res.status(200).json({
         data: result,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async update_status(req, res, next) {
+    const { id } = req.params;
+    const { isHr, isManager } = req.body;
+
+    try {
+      let updateFields = {};
+
+      if (isHr) {
+        updateFields["approvalStatus.isHr.status"] = isHr.status || "Pending";
+        updateFields["approvalStatus.isHr.comment"] = isHr.comment || "";
+      }
+
+      if (isManager) {
+        updateFields["approvalStatus.isManager.status"] =
+          isManager.status || "Pending";
+        updateFields["approvalStatus.isManager.comment"] =
+          isManager.comment || "";
+      }
+
+      const updatedAttendanceRequest =
+        await AttendanceOvertime.findOneAndUpdate(
+          { uId: id },
+          { $set: updateFields },
+          { new: true, runValidators: true }
+        );
+
+      if (!updatedAttendanceRequest) {
+        throw customizeError(404, "Attendance request not found");
+      }
+
+      res.status(200).json({
+        message: "Approval status updated successfully",
+        data: updatedAttendanceRequest,
       });
     } catch (error) {
       next(error);
