@@ -17,7 +17,7 @@ attendanceRequestRoutes.put("/:id", async (req, res, next) => {
 });
 
 attendanceRequestRoutes.get("/", async (req, res, next) => {
-  await attendanceRequestController.getAll(req, res, next);
+  await attendanceRequestController.get_by_query(req, res, next);
 });
 
 attendanceRequestRoutes.get("/:id", async (req, res, next) => {

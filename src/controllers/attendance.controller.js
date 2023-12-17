@@ -5,6 +5,8 @@ import { customizeError } from "../utils/common.js";
 import mockData from "../utils/mockData.js";
 import { uploadFile } from "../utils/aws.js";
 
+import { v4 } from "uuid";
+
 class AttendancesController extends BaseController {
   constructor() {
     super(AttendancesModel);
@@ -17,7 +19,7 @@ class AttendancesController extends BaseController {
       const upload = await uploadFile(req.file);
 
       const lastAttendance = await AttendancesModel.findOne({
-        employeeID: mockDataResult[0].employee.employee3.employeeID, // in the future use employeeID from the token
+        employeeID: mockDataResult[0].employee.employee2.employeeID, // in the future use employeeID from the token
       }).sort({ punchIn: -1 });
 
       if (lastAttendance && !lastAttendance.punchOut) {
@@ -29,12 +31,13 @@ class AttendancesController extends BaseController {
 
       const newData = {
         ...req.body,
-        employeeID: mockDataResult[0].employee.employee3.employeeID,
+        uId: v4(),
+        employeeID: mockDataResult[0].employee.employee2.employeeID,
         scheduleID: mockDataResult[1].schedules.morning.uId,
         organizationID: mockDataResult[2].company.uId,
         location: mockDataResult[2].company.location,
-        position: mockDataResult[0].employee.employee3.position,
-        department: mockDataResult[0].employee.employee3.department,
+        position: mockDataResult[0].employee.employee2.position,
+        department: mockDataResult[0].employee.employee2.department,
         punchIn: new Date(),
         punchInImage: upload.Location,
       };
@@ -244,7 +247,9 @@ class AttendancesController extends BaseController {
         throw customizeError(400, "Invalid query parameters");
       }
 
-      const attendances = await AttendancesModel.find(query);
+      const attendances = await AttendancesModel.find(query)
+        .limit(req.query.limit ? req.query.limit : 0)
+        .skip(req.query.skip ? req.query.skip : 0);
 
       if (!attendances || attendances.length === 0) {
         throw customizeError(400, "Attendance record not found");

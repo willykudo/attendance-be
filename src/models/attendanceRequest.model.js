@@ -1,14 +1,11 @@
 import mongoose from "mongoose";
 
-import { v4 } from "uuid";
-
 const attendanceRequestSchema = mongoose.Schema(
   {
     uId: {
       type: String,
       required: true,
       unique: true,
-      default: v4(),
     },
     scheduleID: {
       type: String,

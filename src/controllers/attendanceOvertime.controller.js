@@ -2,6 +2,8 @@ import AttendanceOvertime from "../models/attendanceOvertime.model.js";
 import AttendanceModel from "../models/attendances.model.js";
 import BaseController from "./base.controller.js";
 
+import { v4 } from "uuid";
+
 class AttendanceOvertimeController extends BaseController {
   constructor() {
     super(AttendanceOvertime);
@@ -9,9 +11,10 @@ class AttendanceOvertimeController extends BaseController {
 
   async create_overtime(req, res, next) {
     try {
-      const { attendanceID } = req.body;
+      const { attendanceID, employeeID } = req.body;
       const attendanceRecord = await AttendanceModel.findOne({
         uId: attendanceID,
+        employeeID: employeeID,
       });
 
       const punchOut = new Date(attendanceRecord.punchOut);
@@ -23,6 +26,7 @@ class AttendanceOvertimeController extends BaseController {
 
       const newData = {
         ...req.body,
+        uId: v4(),
         overtimeDuration: totalHoursWorked,
         overtimeDate: attendanceRecord.createdAt,
       };
@@ -51,12 +55,13 @@ class AttendanceOvertimeController extends BaseController {
           overtimeDuration: 1,
           overtimeDate: 1,
           notes: 1,
-          status: 1,
+          approvalStatus: 1,
           "attendanceDetails.location": 1,
           "attendanceDetails.department": 1,
         },
       };
-      const result = await AttendanceOvertime.aggregate([
+
+      const pipeline = [
         {
           $lookup: {
             from: "attendances",
@@ -76,7 +81,17 @@ class AttendanceOvertimeController extends BaseController {
           },
         },
         projection,
-      ]);
+      ];
+
+      if (req.query.skip) {
+        pipeline.push({ $skip: parseInt(req.query.skip) });
+      }
+
+      if (req.query.limit) {
+        pipeline.push({ $limit: parseInt(req.query.limit) });
+      }
+
+      const result = await AttendanceOvertime.aggregate(pipeline);
 
       return res.status(200).json({
         data: result,

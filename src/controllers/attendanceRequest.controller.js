@@ -4,6 +4,8 @@ import BaseController from "./base.controller.js";
 
 import { customizeError } from "../utils/common.js";
 
+import { v4 } from "uuid";
+
 class AttendanceRequestController extends BaseController {
   constructor() {
     super(AttendanceRequestModel);
@@ -23,6 +25,7 @@ class AttendanceRequestController extends BaseController {
 
       const newData = new AttendanceRequestModel({
         ...req.body,
+        uId: v4(),
         attendanceID: attendanceRecord.uId,
         scheduleID: attendanceRecord.scheduleID,
       });
@@ -92,6 +95,62 @@ class AttendanceRequestController extends BaseController {
       res.status(200).json({
         message: "Approval status updated successfully",
         data: updatedAttendanceRequest,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async get_by_query(req, res, next) {
+    try {
+      const projection = {
+        $project: {
+          _id: 0,
+          uId: 1,
+          attendanceID: 1,
+          overtimeDuration: 1,
+          overtimeDate: 1,
+          notes: 1,
+          approvalStatus: 1,
+          "attendanceDetails.location": 1,
+          "attendanceDetails.department": 1,
+        },
+      };
+
+      const pipeline = [
+        {
+          $lookup: {
+            from: "attendances",
+            localField: "attendanceID",
+            foreignField: "uId",
+            as: "attendanceDetails",
+          },
+        },
+        {
+          $match: {
+            "attendanceDetails.location": {
+              $regex: new RegExp(req.query.location, "i"),
+            },
+            "attendanceDetails.department": {
+              $regex: new RegExp(req.query.department, "i"),
+            },
+          },
+        },
+        projection,
+      ];
+
+      if (req.query.skip) {
+        pipeline.push({ $skip: parseInt(req.query.skip) });
+      }
+
+      if (req.query.limit) {
+        pipeline.push({ $limit: parseInt(req.query.limit) });
+      }
+
+      const result = await AttendanceRequestModel.aggregate(pipeline);
+
+      return res.status(200).json({
+        data: result,
       });
     } catch (error) {
       next(error);
