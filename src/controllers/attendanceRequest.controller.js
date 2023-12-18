@@ -15,8 +15,8 @@ class AttendanceRequestController extends BaseController {
     try {
       const attendanceRecord = await AttendancesModel.findOne({
         employeeID: req.body.employeeID,
-        punchIn: req.body.punchInDate,
-        punchOut: req.body.punchOutDate,
+        punchIn: req.body.punchIn,
+        punchOut: req.body.punchOut,
       });
 
       if (!attendanceRecord) {

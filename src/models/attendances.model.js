@@ -57,10 +57,32 @@ const attendanceSchema = mongoose.Schema(
       },
     ],
     punchInGps: {
-      type: String,
+      address: {
+        type: String,
+      },
+      lat: {
+        type: String,
+      },
+      long: {
+        type: String,
+      },
+      postalCode: {
+        type: String,
+      },
     },
     punchOutGps: {
-      type: String,
+      address: {
+        type: String,
+      },
+      lat: {
+        type: String,
+      },
+      long: {
+        type: String,
+      },
+      postalCode: {
+        type: String,
+      },
     },
     punchInImage: {
       type: String,

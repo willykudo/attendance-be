@@ -16,19 +16,11 @@ const attendanceRequestSchema = mongoose.Schema(
       required: true,
       ref: "Attendances",
     },
-    punchInDate: {
+    punchIn: {
       type: Date,
       required: true,
     },
-    punchOutDate: {
-      type: Date,
-      required: true,
-    },
-    punchInTime: {
-      type: Date,
-      required: true,
-    },
-    punchOutTime: {
+    punchOut: {
       type: Date,
       required: true,
     },
