@@ -19,7 +19,7 @@ class AttendancesController extends BaseController {
       const upload = await uploadFile(req.file);
 
       const lastAttendance = await AttendancesModel.findOne({
-        employeeID: mockDataResult[0].employee.employee2.employeeID, // in the future use employeeID from the token
+        employeeID: mockDataResult[0].employee.employee2.employeeID,
       }).sort({ punchIn: -1 });
 
       if (lastAttendance && !lastAttendance.punchOut) {
@@ -48,7 +48,7 @@ class AttendancesController extends BaseController {
         throw customizeError(400, "Create data failed");
       }
 
-      return res.status(200).json({ data: createdData });
+      return res.status(201).json({ data: createdData });
     } catch (error) {
       next(error);
     }

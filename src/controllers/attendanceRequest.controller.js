@@ -15,9 +15,9 @@ class AttendanceRequestController extends BaseController {
     try {
       const attendanceRecord = await AttendancesModel.findOne({
         employeeID: req.body.employeeID,
-        punchIn: req.body.punchIn,
-        punchOut: req.body.punchOut,
-      });
+      })
+        .sort({ createdAt: -1 })
+        .limit(1);
 
       if (!attendanceRecord) {
         throw customizeError(400, "Attendance record not found");

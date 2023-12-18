@@ -10,7 +10,7 @@
     "decrypt": "node decrypt.js",
     "decrypt:stage": "SET NODE_ENV=stage&& node decrypt.js",
     "decrypt:stage:linux": "NODE_ENV=stage node decrypt.js",
-    "test": "env-cmd -f ./config/test.env jest --watchAll"
+    "test": "jest"
   },
   "author": "",
   "license": "ISC",
@@ -38,6 +38,9 @@
     "uuid": "^8.3.2"
   },
   "devDependencies": {
+    "@babel/core": "^7.23.6",
+    "@babel/preset-env": "^7.23.6",
+    "babel-jest": "^29.7.0",
     "env-cmd": "^10.1.0",
     "jest": "^29.7.0",
     "supertest": "^6.3.3"
