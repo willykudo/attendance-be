@@ -14,7 +14,6 @@ const mockData = async () => {
     const response = await axios.get(MOCKDATA_API);
 
     const data = response.data;
-    console.log(data);
 
     return data;
   } catch (error) {

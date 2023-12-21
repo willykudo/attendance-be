@@ -10,18 +10,6 @@ const s3 = new AWS.S3({
   secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
 });
 
-// export const uploadFile = (file) => {
-//   const fileContent = fs.readFileSync(file[0].path);
-//   const params = {
-//     Bucket: process.env.S3_BUCKET_NAME,
-//     Key: `uploads/${Date.now()}-${file[0].filename}`,
-//     Body: fileContent,
-//     ContentType: file[0].mimetype,
-//   };
-
-//   return s3.upload(params).promise();
-// };
-
 export const uploadFile = async (file) => {
   const fileStream = fs.createReadStream(file.path);
 

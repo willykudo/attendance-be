@@ -2,7 +2,6 @@ import AttendancesModel from "../models/attendances.model.js";
 import BaseController from "./base.controller.js";
 import { customizeError } from "../utils/common.js";
 
-import mockData from "../utils/mockData.js";
 import { uploadFile } from "../utils/aws.js";
 
 import { v4 } from "uuid";
@@ -14,12 +13,10 @@ class AttendancesController extends BaseController {
 
   async punch_in(req, res, next) {
     try {
-      const mockDataResult = await mockData();
-
       const upload = await uploadFile(req.file);
 
-      const lastAttendance = await AttendancesModel.findOne({
-        employeeID: mockDataResult[0].employee.employee2.employeeID,
+      const lastAttendance = await AttendancesModel.find({
+        employeeID: req.body.employeeID,
       }).sort({ punchIn: -1 });
 
       if (lastAttendance && !lastAttendance.punchOut) {
@@ -32,12 +29,6 @@ class AttendancesController extends BaseController {
       const newData = {
         ...req.body,
         uId: v4(),
-        employeeID: mockDataResult[0].employee.employee2.employeeID,
-        scheduleID: mockDataResult[1].schedules.morning.uId,
-        organizationID: mockDataResult[2].company.uId,
-        location: mockDataResult[2].company.location,
-        position: mockDataResult[0].employee.employee2.position,
-        department: mockDataResult[0].employee.employee2.department,
         punchIn: new Date(),
         punchInImage: upload.Location,
       };
@@ -195,22 +186,23 @@ class AttendancesController extends BaseController {
   async get_by_query(req, res, next) {
     try {
       const { name, location, department } = req.query;
-      const query = {};
 
-      if (name) query.name = name;
-      if (location) query.location = location;
-      if (department) query.department = department;
+      const query = {
+        ...(name && { name }),
+        ...(location && { location }),
+        ...(department && { department }),
+      };
 
-      if (!query) {
-        throw customizeError(400, "Invalid query parameters");
+      if (Object.keys(query).length === 0) {
+        return res.status(400).json({ error: "Invalid query parameters" });
       }
 
       const attendances = await AttendancesModel.find(query)
-        .limit(req.query.limit ? req.query.limit : 0)
-        .skip(req.query.skip ? req.query.skip : 0);
+        .limit(parseInt(req.query.limit) || 0)
+        .skip(parseInt(req.query.skip) || 0);
 
       if (!attendances || attendances.length === 0) {
-        throw customizeError(400, "Attendance record not found");
+        return res.status(400).json({ error: "Attendance record not found" });
       }
 
       res.status(200).json({ attendances });
