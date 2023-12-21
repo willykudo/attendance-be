@@ -15,7 +15,7 @@ class AttendancesController extends BaseController {
     try {
       const upload = await uploadFile(req.file);
 
-      const lastAttendance = await AttendancesModel.find({
+      const lastAttendance = await AttendancesModel.findOne({
         employeeID: req.body.employeeID,
       }).sort({ punchIn: -1 });
 
