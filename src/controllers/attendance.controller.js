@@ -15,9 +15,13 @@ class AttendancesController extends BaseController {
     try {
       const upload = await uploadFile(req.file);
 
-      const lastAttendance = await AttendancesModel.findOne({
+      const lastAttendance = await AttendancesModel.find({
         employeeID: req.body.employeeID,
       }).sort({ punchIn: -1 });
+
+      if (!lastAttendance) {
+        throw new Error("No last attendance found");
+      }
 
       if (lastAttendance && !lastAttendance.punchOut) {
         throw customizeError(
@@ -109,7 +113,6 @@ class AttendancesController extends BaseController {
         breakImage: upload.Location,
       };
 
-      // If there are no breaks or the last break has a returnFromBreak, allow the break
       if (!attendanceRecord.breaks.length || lastReturn.returnFromBreak) {
         const updatedAttendance = await AttendancesModel.findOneAndUpdate(
           { uId: id },
@@ -198,14 +201,27 @@ class AttendancesController extends BaseController {
       }
 
       const attendances = await AttendancesModel.find(query)
-        .limit(parseInt(req.query.limit) || 0)
-        .skip(parseInt(req.query.skip) || 0);
+        .limit(req.query.limit ? req.query.limit : 0)
+        .skip(req.query.skip ? req.query.skip : 0);
 
       if (!attendances || attendances.length === 0) {
         return res.status(400).json({ error: "Attendance record not found" });
       }
 
       res.status(200).json({ attendances });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async delete_by_id(req, res, next) {
+    const { id } = req.params;
+    try {
+      const result = await AttendancesModel.findOneAndDelete({ uId: id });
+      if (!result) {
+        throw customizeError(400, "Delete data failed");
+      }
+      return res.status(200).json({ message: "Data deleted successfully" });
     } catch (error) {
       next(error);
     }

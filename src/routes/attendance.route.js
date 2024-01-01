@@ -38,7 +38,7 @@ attendanceRoutes.put(
 );
 
 attendanceRoutes.delete("/:id", async (req, res, next) => {
-  await attendancesController.delete(req, res, next);
+  await attendancesController.delete_by_id(req, res, next);
 });
 
 attendanceRoutes.get("/:id", async (req, res, next) => {

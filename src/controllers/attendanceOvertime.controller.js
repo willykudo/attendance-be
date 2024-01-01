@@ -37,7 +37,7 @@ class AttendanceOvertimeController extends BaseController {
         throw customizeError(400, "Create data failed");
       }
 
-      return res.status(200).json({
+      return res.status(201).json({
         data: createdData,
       });
     } catch (error) {
@@ -135,6 +135,44 @@ class AttendanceOvertimeController extends BaseController {
         message: "Approval status updated successfully",
         data: updatedAttendanceRequest,
       });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async delete_by_id(req, res, next) {
+    const { id } = req.params;
+    try {
+      const result = await AttendanceOvertime.findOneAndDelete({
+        uId: id,
+      });
+
+      if (!result) {
+        throw customizeError(404, "Overtime record not found");
+      }
+
+      res.status(200).json({
+        message: "Attendance request deleted successfully",
+        data: result,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async get_by_id(req, res, next) {
+    const { id } = req.params;
+
+    try {
+      const attendanceRecord = await AttendanceOvertime.findOne({
+        uId: id,
+      });
+
+      if (!attendanceRecord) {
+        throw customizeError(400, "Attendance record not found");
+      }
+
+      res.status(200).json({ data: attendanceRecord });
     } catch (error) {
       next(error);
     }

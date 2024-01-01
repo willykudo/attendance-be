@@ -9,7 +9,7 @@ attendanceRequestRoutes.post("/create", async (req, res, next) => {
 });
 
 attendanceRequestRoutes.delete("/:id", async (req, res, next) => {
-  await attendanceRequestController.delete(req, res, next);
+  await attendanceRequestController.delete_by_id(req, res, next);
 });
 
 attendanceRequestRoutes.put("/:id", async (req, res, next) => {

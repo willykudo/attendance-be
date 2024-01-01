@@ -2,7 +2,7 @@ import express from "express";
 import cors from "cors";
 import bodyParser from "body-parser";
 import { ConnectDB } from "./config/db.js";
-import routes from "./src/routes/index.js";
+import router from "./src/routes/index.js";
 import { notFound, errorHandler } from "./src/middlewares/error.middleware.js";
 
 const app = express();
@@ -24,7 +24,7 @@ app.use(
 
 app.use(cors(corsOptions));
 
-app.use("/", routes);
+app.use("/", router);
 
 app.use(notFound);
 app.use(errorHandler);

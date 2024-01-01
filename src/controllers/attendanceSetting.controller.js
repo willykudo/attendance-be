@@ -8,54 +8,21 @@ class AttendanceSetting extends BaseController {
     super(AttendanceSettingModel);
   }
 
-  // async add_overtime_rounding(req, res, next) {
-  //   const { id } = req.params;
-  //   try {
-  //     const { from, to, equal } = req.body;
-
-  //     const newData = {
-  //       from: from,
-  //       to: to,
-  //       equal: equal,
-  //     };
-  //     const result = await AttendanceSettingModel.findOneAndUpdate(
-  //       { uId: id },
-  //       { $push: { overtimeRounding: newData } },
-  //       { new: true }
-  //     );
-
-  //     if (!result) {
-  //       throw customizeError(400, "Update data failed");
-  //     }
-  //     return res.status(200).json({ data: result });
-  //   } catch (error) {
-  //     next(error);
-  //   }
-  // }
-
-  // async delete_overtime_rounding(req, res, next) {
-  //   const { id, index } = req.params;
-  //   console.log("Deleting id", overtimeRoundingID);
-  //   try {
-  //     const result = await AttendanceSettingModel.findOneAndDelete(
-  //       { uId: id },
-  //       {
-  //         $pull: {
-  //           overtimeRounding: { uId: overtimeRoundingID },
-  //         },
-  //       },
-  //       { new: true }
-  //     );
-
-  //     if (!result) {
-  //       throw customizeError(400, "Update data failed");
-  //     }
-
-  //     return res.status(200).json({ data: result });
-  //   } catch (error) {
-  //     next(error);
-  //   }
-  // }
+  async get_settings(req, res, next) {
+    try {
+      const data = await this.model.find();
+      if (!data) {
+        throw customizeError(404, "No data found");
+      }
+      res.status(200).json({
+        status: 200,
+        message: "success",
+        data,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 const attendanceSettingController = new AttendanceSetting();

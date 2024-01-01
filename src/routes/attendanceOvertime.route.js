@@ -12,12 +12,16 @@ attendanceOvertimeRoutes.get("/", async (req, res, next) => {
   await attendanceOvertime.get_by_query(req, res, next);
 });
 
+attendanceOvertimeRoutes.get("/:id", async (req, res, next) => {
+  await attendanceOvertime.get_by_id(req, res, next);
+});
+
 attendanceOvertimeRoutes.put("/:id", async (req, res, next) => {
   await attendanceOvertime.update_status(req, res, next);
 });
 
 attendanceOvertimeRoutes.delete("/:id", async (req, res, next) => {
-  await attendanceOvertime.delete(req, res, next);
+  await attendanceOvertime.delete_by_id(req, res, next);
 });
 
 export default attendanceOvertimeRoutes;

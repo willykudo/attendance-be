@@ -21,6 +21,7 @@ class BaseController {
       next(error);
     }
   }
+
   async getById(req, res, next) {
     const { id } = req.params;
     try {
@@ -42,7 +43,7 @@ class BaseController {
       if (!createdData) {
         throw customizeError(400, "Create data failed");
       }
-      return res.status(200).json({ data: createdData });
+      return res.status(201).json({ data: createdData });
     } catch (error) {
       next(error);
     }

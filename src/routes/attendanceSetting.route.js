@@ -5,7 +5,7 @@ import attendanceSettingController from "../controllers/attendanceSetting.contro
 const attendanceSettingRoutes = express.Router();
 
 attendanceSettingRoutes.get("/", async (req, res, next) => {
-  await attendanceSettingController.getAll(req, res, next);
+  await attendanceSettingController.get_settings(req, res, next);
 });
 
 attendanceSettingRoutes.post("/create", async (req, res, next) => {

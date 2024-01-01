@@ -38,7 +38,7 @@ class AttendanceRequestController extends BaseController {
         throw customizeError(400, "Create data failed");
       }
 
-      return res.status(200).json({ data: createdData });
+      return res.status(201).json({ data: createdData });
     } catch (error) {
       next(error);
     }
@@ -152,6 +152,19 @@ class AttendanceRequestController extends BaseController {
       return res.status(200).json({
         data: result,
       });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async delete_by_id(req, res, next) {
+    const { id } = req.params;
+    try {
+      const result = AttendanceRequestModel.findOneAndDelete({ uId: id });
+      if (!result) {
+        throw customizeError(400, "Delete data failed");
+      }
+      return res.status(200).json({ message: "Data deleted successfully" });
     } catch (error) {
       next(error);
     }
