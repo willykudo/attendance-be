@@ -9,11 +9,11 @@ attendanceSettingRoutes.get("/", async (req, res, next) => {
 });
 
 attendanceSettingRoutes.post("/create", async (req, res, next) => {
-  await attendanceSettingController.create(req, res, next);
+  await attendanceSettingController.create_setting(req, res, next);
 });
 
 attendanceSettingRoutes.put("/:id", async (req, res, next) => {
-  await attendanceSettingController.update(req, res, next);
+  await attendanceSettingController.update_settings(req, res, next);
 });
 
 export default attendanceSettingRoutes;

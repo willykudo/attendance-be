@@ -3,11 +3,11 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-const customAxios = axios.create({
-  baseURL: process.env.ENTITY_API_URL,
+const userAxios = axios.create({
+  baseURL: process.env.USER_API_URL,
   headers: {
     "Content-Type": "application/json",
-  }
+  },
 });
 
-export default customAxios;
+export default { userAxios };

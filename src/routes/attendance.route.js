@@ -14,7 +14,7 @@ attendanceRoutes.post(
 );
 
 attendanceRoutes.put(
-  "/punch-out/:id",
+  "/punch-out",
   upload.single("punchOutImage"),
   async (req, res, next) => {
     await attendancesController.punch_out(req, res, next);
@@ -22,7 +22,7 @@ attendanceRoutes.put(
 );
 
 attendanceRoutes.put(
-  "/break/:id",
+  "/break",
   upload.single("breakImage"),
   async (req, res, next) => {
     await attendancesController.break(req, res, next);
@@ -30,7 +30,7 @@ attendanceRoutes.put(
 );
 
 attendanceRoutes.put(
-  "/return/:id",
+  "/return-from-break",
   upload.single("returnImage"),
   async (req, res, next) => {
     await attendancesController.return_from_break(req, res, next);

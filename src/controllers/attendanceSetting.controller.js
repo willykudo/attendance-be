@@ -23,6 +23,38 @@ class AttendanceSetting extends BaseController {
       next(error);
     }
   }
+
+  async update_settings(req, res, next) {
+    const { id } = req.params;
+    const updatedData = req.body;
+    try {
+      const result = await AttendanceSettingModel.findOneAndUpdate(
+        { uId: id },
+        updatedData,
+        { new: true }
+      );
+      if (!result) {
+        throw customizeError(400, "Update data failed");
+      }
+      return res.status(200).json({ data: result });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async create_setting(req, res, next) {
+    const newData = req.body;
+    try {
+      const createdData = await AttendanceSettingModel.create(newData);
+
+      if (!createdData) {
+        throw customizeError(400, "Create data failed");
+      }
+      return res.status(201).json({ data: createdData });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 const attendanceSettingController = new AttendanceSetting();

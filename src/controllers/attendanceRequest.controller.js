@@ -14,7 +14,7 @@ class AttendanceRequestController extends BaseController {
   async create_request(req, res, next) {
     try {
       const attendanceRecord = await AttendancesModel.findOne({
-        employeeID: req.body.employeeID,
+        employeeID: req.user.uId,
       })
         .sort({ createdAt: -1 })
         .limit(1);

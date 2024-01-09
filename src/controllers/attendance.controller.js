@@ -3,6 +3,7 @@ import BaseController from "./base.controller.js";
 import { customizeError } from "../utils/common.js";
 
 import { uploadFile } from "../utils/aws.js";
+import { getDataById } from "../services/employee.js";
 
 import { v4 } from "uuid";
 
@@ -15,45 +16,43 @@ class AttendancesController extends BaseController {
     try {
       const upload = await uploadFile(req.file);
 
+      const employeeID = req.user.uId;
+
       const lastAttendance = await AttendancesModel.find({
-        employeeID: req.body.employeeID,
+        employeeID: employeeID,
       }).sort({ punchIn: -1 });
 
-      if (!lastAttendance) {
-        throw new Error("No last attendance found");
-      }
+      if (lastAttendance.length === 0) {
+        const newData = {
+          ...req.body,
+          employeeID: employeeID,
+          organizationID: req.user.organizationID,
+          uId: v4(),
+          punchIn: new Date(),
+          punchInImage: upload.Location,
+        };
 
-      if (lastAttendance && !lastAttendance.punchOut) {
+        const createdData = await AttendancesModel.create(newData);
+
+        return res.status(201).json({ data: createdData });
+      } else if (!lastAttendance[0].punchOut) {
         throw customizeError(
           400,
           "Cannot punch in. Last record doesn't have a punch out."
         );
       }
-
-      const newData = {
-        ...req.body,
-        uId: v4(),
-        punchIn: new Date(),
-        punchInImage: upload.Location,
-      };
-
-      const createdData = await AttendancesModel.create(newData);
-
-      if (!createdData) {
-        throw customizeError(400, "Create data failed");
-      }
-
-      return res.status(201).json({ data: createdData });
     } catch (error) {
       next(error);
     }
   }
 
   async punch_out(req, res, next) {
-    const { id } = req.params;
+    const employeeID = req.user.uId;
 
     try {
-      const attendanceRecord = await AttendancesModel.findOne({ uId: id });
+      const attendanceRecord = await AttendancesModel.findOne({
+        employeeID: employeeID,
+      });
       const upload = await uploadFile(req.file);
 
       if (!attendanceRecord) {
@@ -98,13 +97,16 @@ class AttendancesController extends BaseController {
   }
 
   async break(req, res, next) {
-    const { id } = req.params;
+    const employeeID = req.user.uId;
 
     try {
       const upload = await uploadFile(req.file);
 
-      const attendanceRecord = await AttendancesModel.findOne({ uId: id });
-      const lastReturn =
+      const attendanceRecord = await AttendancesModel.findOne({
+        employeeID: employeeID,
+      });
+
+      const lastRecord =
         attendanceRecord.breaks[attendanceRecord.breaks.length - 1];
 
       const newBreak = {
@@ -113,9 +115,9 @@ class AttendancesController extends BaseController {
         breakImage: upload.Location,
       };
 
-      if (!attendanceRecord.breaks.length || lastReturn.returnFromBreak) {
+      if (!attendanceRecord.breaks.length || lastRecord.returnFromBreak) {
         const updatedAttendance = await AttendancesModel.findOneAndUpdate(
-          { uId: id },
+          { employeeID: employeeID },
           { $push: { breaks: newBreak } },
           { new: true }
         );
@@ -138,10 +140,12 @@ class AttendancesController extends BaseController {
   }
 
   async return_from_break(req, res, next) {
-    const { id } = req.params;
+    const employeeID = req.user.uId;
 
     try {
-      const attendanceRecord = await AttendancesModel.findOne({ uId: id });
+      const attendanceRecord = await AttendancesModel.findOne({
+        employeeID: employeeID,
+      });
       const upload = await uploadFile(req.file);
 
       if (!attendanceRecord) {
@@ -171,10 +175,12 @@ class AttendancesController extends BaseController {
   }
 
   async get_by_id(req, res, next) {
-    const { id } = req.params;
+    employeeID = req.user.uId;
 
     try {
-      const attendanceRecord = await AttendancesModel.findOne({ uId: id });
+      const attendanceRecord = await AttendancesModel.findOne({
+        employeeID: employeeID,
+      });
 
       if (!attendanceRecord) {
         throw customizeError(400, "Attendance record not found");
@@ -188,17 +194,12 @@ class AttendancesController extends BaseController {
 
   async get_by_query(req, res, next) {
     try {
-      const { name, location, department } = req.query;
+      const { location, department } = req.query;
 
       const query = {
-        ...(name && { name }),
         ...(location && { location }),
         ...(department && { department }),
       };
-
-      if (Object.keys(query).length === 0) {
-        return res.status(400).json({ error: "Invalid query parameters" });
-      }
 
       const attendances = await AttendancesModel.find(query)
         .limit(req.query.limit ? req.query.limit : 0)

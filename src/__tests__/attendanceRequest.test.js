@@ -2,7 +2,6 @@ import request from "supertest";
 import app from "../../app.js";
 import AttendanceRequestModel from "../models/attendanceRequest.model.js";
 import attendanceRequestController from "../controllers/attendanceRequest.controller.js";
-import AttendancesModel from "../models/attendances.model.js";
 
 jest.mock("../models/attendances.model.js", () => {
   return {

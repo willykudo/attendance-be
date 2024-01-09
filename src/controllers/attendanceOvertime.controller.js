@@ -11,7 +11,9 @@ class AttendanceOvertimeController extends BaseController {
 
   async create_overtime(req, res, next) {
     try {
-      const { attendanceID, employeeID } = req.body;
+      const { attendanceID } = req.body;
+      const employeeID = req.user.uId;
+
       const attendanceRecord = await AttendanceModel.findOne({
         uId: attendanceID,
         employeeID: employeeID,
