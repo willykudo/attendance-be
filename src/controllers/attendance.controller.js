@@ -1,11 +1,11 @@
-import AttendancesModel from "../models/attendances.model.js";
-import BaseController from "./base.controller.js";
-import { customizeError } from "../utils/common.js";
+import AttendancesModel from '../models/attendances.model.js';
+import BaseController from './base.controller.js';
+import { customizeError } from '../utils/common.js';
+import { getEmployeeinformation } from '../services/employee.js';
 
-import { uploadFile } from "../utils/aws.js";
-import { getDataById } from "../services/employee.js";
+import { uploadFile } from '../utils/aws.js';
 
-import { v4 } from "uuid";
+import { v4 } from 'uuid';
 
 class AttendancesController extends BaseController {
   constructor() {
@@ -16,17 +16,18 @@ class AttendancesController extends BaseController {
     try {
       const upload = await uploadFile(req.file);
 
-      const employeeID = req.user.uId;
+      const employeeID = req.user.userLogin.uId;
+      const organizationID = req.user.userLogin.organizationID;
 
       const lastAttendance = await AttendancesModel.find({
         employeeID: employeeID,
       }).sort({ punchIn: -1 });
 
-      if (lastAttendance.length === 0) {
+      if (lastAttendance.length === 0 || lastAttendance[0].punchOut) {
         const newData = {
           ...req.body,
           employeeID: employeeID,
-          organizationID: req.user.organizationID,
+          organizationID: organizationID,
           uId: v4(),
           punchIn: new Date(),
           punchInImage: upload.Location,
@@ -47,67 +48,77 @@ class AttendancesController extends BaseController {
   }
 
   async punch_out(req, res, next) {
-    const employeeID = req.user.uId;
+    const employeeID = req.user.userLogin.uId;
 
     try {
-      const attendanceRecord = await AttendancesModel.findOne({
+      const attendanceRecords = await AttendancesModel.find({
         employeeID: employeeID,
-      });
-      const upload = await uploadFile(req.file);
+      }).sort({ punchIn: -1 });
 
-      if (!attendanceRecord) {
-        throw customizeError(400, "Attendance record not found");
+      if (!attendanceRecords || attendanceRecords.length === 0) {
+        throw customizeError(400, 'Attendance record not found');
       }
 
-      const lastReturn =
-        attendanceRecord.breaks[attendanceRecord.breaks.length - 1];
+      const lastAttendanceRecord = attendanceRecords[0];
 
-      if (!lastReturn) {
+      const checkLastBreak =
+        lastAttendanceRecord &&
+        lastAttendanceRecord.breaks[lastAttendanceRecord.breaks.length - 1];
+
+      console.log('checkLastBreak: ', checkLastBreak);
+
+      if (!checkLastBreak) {
         throw customizeError(
           400,
           "Cannot punch out. Last record doesn't have a break"
         );
       }
 
-      if (!lastReturn.returnFromBreak) {
+      if (!checkLastBreak.returnFromBreak) {
         throw customizeError(
           400,
           "Cannot punch out. Last record doesn't have a return from break"
         );
       }
 
-      const punchInTime = attendanceRecord.punchIn;
+      const punchInTime = lastAttendanceRecord.punchIn;
       const punchOutTime = new Date();
       const totalHoursWorked = (punchOutTime - punchInTime) / (1000 * 60 * 60);
 
-      const status = totalHoursWorked > 8 ? "overtime" : "late";
+      const status = totalHoursWorked > 8 ? 'On Time' : 'Late';
 
-      attendanceRecord.punchOutDesc = req.body.punchOutDesc;
-      attendanceRecord.punchOutGps = req.body.punchOutGps;
-      attendanceRecord.punchOut = punchOutTime;
-      attendanceRecord.status = status;
-      attendanceRecord.punchOutImage = upload.Location;
+      const upload = await uploadFile(req.file);
 
-      await attendanceRecord.save();
+      lastAttendanceRecord.punchOutDesc = req.body.punchOutDesc;
+      lastAttendanceRecord.punchOutGps = req.body.punchOutGps;
+      lastAttendanceRecord.punchOut = punchOutTime;
+      lastAttendanceRecord.status = status;
+      lastAttendanceRecord.punchOutImage = upload.Location;
 
-      return res.status(200).json({ data: attendanceRecord });
+      await lastAttendanceRecord.save();
+
+      return res.status(200).json({ data: lastAttendanceRecord });
     } catch (error) {
       next(error);
     }
   }
 
   async break(req, res, next) {
-    const employeeID = req.user.uId;
+    const employeeID = req.user.userLogin.uId;
 
     try {
       const upload = await uploadFile(req.file);
 
-      const attendanceRecord = await AttendancesModel.findOne({
+      const latestAttendanceRecord = await AttendancesModel.findOne({
         employeeID: employeeID,
-      });
+      }).sort({ punchIn: -1 });
+
+      if (!latestAttendanceRecord) {
+        throw customizeError(400, 'Attendance record not found');
+      }
 
       const lastRecord =
-        attendanceRecord.breaks[attendanceRecord.breaks.length - 1];
+        latestAttendanceRecord.breaks[latestAttendanceRecord.breaks.length - 1];
 
       const newBreak = {
         ...req.body,
@@ -115,20 +126,21 @@ class AttendancesController extends BaseController {
         breakImage: upload.Location,
       };
 
-      if (!attendanceRecord.breaks.length || lastRecord.returnFromBreak) {
-        const updatedAttendance = await AttendancesModel.findOneAndUpdate(
-          { employeeID: employeeID },
-          { $push: { breaks: newBreak } },
-          { new: true }
-        );
+      if (
+        !latestAttendanceRecord.breaks.length ||
+        (lastRecord && lastRecord.returnFromBreak)
+      ) {
+        // If there are no breaks or the last break is returned, add a new break
+        latestAttendanceRecord.breaks.push(newBreak);
 
-        if (!updatedAttendance) {
-          throw customizeError(400, "Attendance record not found");
-        }
+        // Save the entire document, not just the breaks array
+        await latestAttendanceRecord.save();
+
         res
           .status(200)
-          .json({ message: "Break added successfully", break: newBreak });
+          .json({ message: 'Break added successfully', break: newBreak });
       } else {
+        // If the last break is not returned, throw an error
         throw customizeError(
           400,
           "Can't add break, please return from break first"
@@ -140,33 +152,43 @@ class AttendancesController extends BaseController {
   }
 
   async return_from_break(req, res, next) {
-    const employeeID = req.user.uId;
+    const employeeID = req.user.userLogin.uId;
 
     try {
-      const attendanceRecord = await AttendancesModel.findOne({
+      const attendanceRecord = await AttendancesModel.find({
         employeeID: employeeID,
-      });
-      const upload = await uploadFile(req.file);
+      })
+        .sort({ punchIn: -1 })
+        .limit(1)
+        .exec();
 
-      if (!attendanceRecord) {
-        throw customizeError(400, "Attendance record not found");
+      if (!attendanceRecord || attendanceRecord.length === 0) {
+        throw customizeError(400, 'Attendance record not found');
       }
 
-      const lastReturn =
-        attendanceRecord.breaks[attendanceRecord.breaks.length - 1];
+      const latestRecord = attendanceRecord[0];
+
+      const lastReturn = latestRecord.breaks[latestRecord.breaks.length - 1];
+
+      if (!lastReturn) {
+        throw customizeError(400, 'No breaks found, cannot return from break');
+      }
 
       if (lastReturn.returnFromBreak) {
-        throw customizeError(400, "Return from break already recorded");
+        throw customizeError(400, 'Return from break already recorded');
       }
 
       lastReturn.returnFromBreak = new Date();
       lastReturn.returnDesc = req.body.returnDesc;
+
+      const upload = await uploadFile(req.file);
       lastReturn.returnImage = upload.Location;
 
-      await attendanceRecord.save();
+      // Save the entire document, not just the breaks array
+      await latestRecord.save();
 
       res.status(200).json({
-        message: "Return from break recorded successfully",
+        message: 'Return from break recorded successfully',
         return: lastReturn,
       });
     } catch (error) {
@@ -175,7 +197,7 @@ class AttendancesController extends BaseController {
   }
 
   async get_by_id(req, res, next) {
-    employeeID = req.user.uId;
+    employeeID = req.user.userLogin.uId;
 
     try {
       const attendanceRecord = await AttendancesModel.findOne({
@@ -183,7 +205,7 @@ class AttendancesController extends BaseController {
       });
 
       if (!attendanceRecord) {
-        throw customizeError(400, "Attendance record not found");
+        throw customizeError(400, 'Attendance record not found');
       }
 
       res.status(200).json({ data: attendanceRecord });
@@ -192,24 +214,83 @@ class AttendancesController extends BaseController {
     }
   }
 
-  async get_by_query(req, res, next) {
+  async get_attendance_data(req, res, next) {
     try {
-      const { location, department } = req.query;
+      // QUERY BASE ON MODEL DATA
+      let query = {};
 
-      const query = {
-        ...(location && { location }),
-        ...(department && { department }),
-      };
-
-      const attendances = await AttendancesModel.find(query)
-        .limit(req.query.limit ? req.query.limit : 0)
-        .skip(req.query.skip ? req.query.skip : 0);
-
-      if (!attendances || attendances.length === 0) {
-        return res.status(400).json({ error: "Attendance record not found" });
+      for (const key in req.query) {
+        if (
+          key !== 'pages' &&
+          key !== 'limit' &&
+          key !== 'sortBy' &&
+          key !== 'orderBy' &&
+          Object.prototype.hasOwnProperty.call(req.query, key)
+        ) {
+          // Check if the field exists in the model
+          const fieldExists = Object.keys(
+            AttendancesModel.schema.paths
+          ).includes(key);
+          if (fieldExists) {
+            query[key] = req.query[key]; // Add to search criteria
+          } else {
+            return res.status(500).json({
+              msg: `Field '${key}' Not Found`,
+            });
+          }
+        }
       }
 
-      res.status(200).json({ attendances });
+      const totalDoc = await AttendancesModel.countDocuments();
+
+      // PAGINATION
+      const pages = parseInt(req.query.pages) || 1;
+      const limit = parseInt(req.query.limit) || 10;
+      const skip = (pages - 1) * limit;
+      // SORTING BY ASCENDING OR DESCENDING
+      const sortBy = req.query.sortBy || 'createdAt';
+      const orderBy = req.query.orderBy || 1;
+
+      const total_Pages = Math.ceil(totalDoc / limit);
+
+      if (pages > total_Pages) {
+        throw new Error('This Page is not found!');
+      }
+
+      const data = await AttendancesModel.find(query)
+        .sort({ [sortBy]: orderBy })
+        .limit(limit)
+        .skip(skip);
+
+      const dataQuery = await AttendancesModel.find(query);
+
+      if (data.length === 0) {
+        return res.status(404).json({ message: 'Data not found' });
+      }
+
+      const totalDocs = query !== null ? dataQuery.length : totalDoc;
+
+      const dataWithEmployeeInfo = await Promise.all(
+        data.map(async (attendance) => {
+          const employeeInfoResult = await getEmployeeinformation(
+            attendance.employeeID
+          );
+          if (employeeInfoResult.success) {
+            const attendanceData = attendance.toObject();
+            attendanceData.employeeInfo = employeeInfoResult.data;
+            return attendanceData;
+          }
+        })
+      );
+
+      console.log(dataWithEmployeeInfo);
+
+      return res.status(200).json({
+        pages: pages,
+        limit: limit,
+        totalDoc: totalDocs,
+        data: dataWithEmployeeInfo,
+      });
     } catch (error) {
       next(error);
     }
@@ -220,9 +301,9 @@ class AttendancesController extends BaseController {
     try {
       const result = await AttendancesModel.findOneAndDelete({ uId: id });
       if (!result) {
-        throw customizeError(400, "Delete data failed");
+        throw customizeError(400, 'Delete data failed');
       }
-      return res.status(200).json({ message: "Data deleted successfully" });
+      return res.status(200).json({ message: 'Data deleted successfully' });
     } catch (error) {
       next(error);
     }

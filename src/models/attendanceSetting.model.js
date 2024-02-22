@@ -10,6 +10,10 @@ const attendanceSettingSchema = mongoose.Schema(
       unique: true,
       default: v4(),
     },
+    organizationID: {
+      type: String,
+      required: true,
+    },
     earlyPunchIn: {
       type: Number,
       required: true,

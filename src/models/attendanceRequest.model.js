@@ -11,10 +11,18 @@ const attendanceRequestSchema = mongoose.Schema(
       type: String,
       required: true,
     },
+    organizationID: {
+      type: String,
+      required: true,
+    },
     attendanceID: {
       type: String,
       required: true,
       ref: "Attendances",
+    },
+    employeeID: {
+      type: String,
+      required: true,
     },
     punchIn: {
       type: Date,

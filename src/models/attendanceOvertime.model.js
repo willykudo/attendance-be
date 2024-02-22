@@ -12,6 +12,14 @@ const attendanceOvertimeSchema = mongoose.Schema(
       required: true,
       ref: "Attendances",
     },
+    organizationID: {
+      type: String,
+      required: true,
+    },
+    employeeID: {
+      type: String,
+      required: true,
+    },
     overtimeDuration: {
       type: Number,
       required: true,

@@ -1,32 +1,31 @@
-import asyncHandler from "express-async-handler";
-import { customizeError } from "../utils/common.js";
-import request from "../utils/request.js";
-import jwt from "jsonwebtoken";
+import asyncHandler from 'express-async-handler';
+import request from '../utils/request.js';
+
+import { getDataByToken } from '../services/employee.js';
 
 const isAuthorized = asyncHandler(async (req, res, next) => {
   let token;
   try {
     if (
       req.headers.authorization &&
-      req.headers.authorization.startsWith("Bearer")
+      req.headers.authorization.startsWith('Bearer')
     ) {
-      token = req.headers.authorization.split(" ")[1];
-      request.userAxios.defaults.headers.common["authorization"] = token;
-      // request.userAxios.defaults.headers.common["organizationID"] =
-      //   req.headers.organizationID;
+      token = req.headers.authorization;
+      request.userAxios.defaults.headers.common['authorization'] = token;
 
-      const secretKey = process.env.JWT_SECRET;
+      const { success, data } = await getDataByToken();
 
-      // Token Validation
-      jwt.verify(token, secretKey, (err, decoded) => {
-        if (err) return res.sendStatus(403);
+      if (!success) {
+        res.status(401);
+        throw new Error("User don't have access");
+      }
 
-        req.user = decoded;
-      });
+      req.user = data;
 
       next();
     } else {
-      throw customizeError(401, "No token found");
+      res.status(401);
+      throw new Error('Not authorized, token failed');
     }
   } catch (err) {
     next(err);

@@ -3,6 +3,8 @@ import BaseController from "./base.controller.js";
 
 import { customizeError } from "../utils/common.js";
 
+import { v4 } from "uuid";
+
 class AttendanceSetting extends BaseController {
   constructor() {
     super(AttendanceSettingModel);
@@ -27,6 +29,7 @@ class AttendanceSetting extends BaseController {
   async update_settings(req, res, next) {
     const { id } = req.params;
     const updatedData = req.body;
+
     try {
       const result = await AttendanceSettingModel.findOneAndUpdate(
         { uId: id },
@@ -43,7 +46,12 @@ class AttendanceSetting extends BaseController {
   }
 
   async create_setting(req, res, next) {
-    const newData = req.body;
+    const newData = {
+      ...req.body,
+      uId: v4(),
+      organizationID: req.user.userLogin.organizationID,
+    };
+
     try {
       const createdData = await AttendanceSettingModel.create(newData);
 
