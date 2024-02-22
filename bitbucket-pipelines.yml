@@ -1,0 +1,25 @@
+#  Template NodeJS build
+
+#  This template allows you to validate your NodeJS code.
+#  The workflow allows running tests and code linting on the default branch.
+
+image: node:16
+
+pipelines:
+  branches:
+    stage:
+      - step:
+          runs-on:
+            - self.hosted
+            - linux.shell
+            - timhut.stage
+          script:
+            - cd /mnt/volume_sgp1_02/attendance-be
+            - git checkout stage
+            - git pull
+            - npm install
+            # decrypt env
+            - npx cross-env NODE_ENV=stage PASS=${ENV_PASS_STAGE} node decrypt-ci.js
+            # pm2
+            - sudo pm2 ls
+            - sudo pm2 restart attendance-be
