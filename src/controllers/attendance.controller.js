@@ -219,6 +219,13 @@ class AttendancesController extends BaseController {
       // QUERY BASE ON MODEL DATA
       let query = {};
 
+      const role = req.user.userLogin.role;
+      const employeeID = req.user.userLogin.uId;
+
+      if (role === 'user') {
+        query.employeeID = employeeID;
+      }
+
       for (const key in req.query) {
         if (
           key !== 'pages' &&
@@ -282,8 +289,6 @@ class AttendancesController extends BaseController {
           }
         })
       );
-
-      console.log(dataWithEmployeeInfo);
 
       return res.status(200).json({
         pages: pages,

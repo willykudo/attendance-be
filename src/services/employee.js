@@ -34,10 +34,13 @@ const getDataByToken = asyncHandler(async () => {
   }
 });
 
+let countFetch = 0;
+
 const getEmployeeinformation = asyncHandler(async (uId) => {
   try {
     const resultData = await request.userAxios.get(`/api/user/${uId}`);
-    console.log(resultData.data);
+    countFetch++;
+    console.log(countFetch);
     return { success: true, data: resultData.data };
   } catch (error) {
     console.log(error);
@@ -51,4 +54,39 @@ const getEmployeeinformation = asyncHandler(async (uId) => {
   }
 });
 
-export { getDataById, getDataByToken, getEmployeeinformation };
+const employeeInfoCache = {};
+
+const getEmployeeInformationWithCache = asyncHandler(async (employeeID) => {
+  if (employeeInfoCache[employeeID]) {
+    return employeeInfoCache[employeeID];
+  }
+
+  try {
+    // Get data from cache
+    const resultData = await request.userAxios.get(`/api/user/${employeeID}`);
+
+    // Store data to cache
+    employeeInfoCache[employeeID] = {
+      success: true,
+      data: resultData.data,
+    };
+
+    return employeeInfoCache[employeeID];
+  } catch (error) {
+    console.log(error);
+    return {
+      success: false,
+      status: error?.response?.status ? error?.response?.status : 500,
+      message: error?.response?.data?.message
+        ? error?.response?.data?.message
+        : 'Failed to get data',
+    };
+  }
+});
+
+export {
+  getDataById,
+  getDataByToken,
+  getEmployeeinformation,
+  getEmployeeInformationWithCache,
+};
