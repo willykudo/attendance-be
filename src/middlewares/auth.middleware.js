@@ -21,7 +21,6 @@ const isAuthorized = asyncHandler(async (req, res, next) => {
       }
 
       req.user = data;
-      console.log(req.user);
 
       next();
     } else {
