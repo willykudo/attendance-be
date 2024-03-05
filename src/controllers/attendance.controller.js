@@ -2,6 +2,7 @@ import AttendancesModel from '../models/attendances.model.js';
 import BaseController from './base.controller.js';
 import { customizeError } from '../utils/common.js';
 import { getEmployeeinformation } from '../services/employee.js';
+import { parse, format, startOfDay, endOfDay } from 'date-fns';
 
 import { uploadFile } from '../utils/aws.js';
 
@@ -214,9 +215,124 @@ class AttendancesController extends BaseController {
     }
   }
 
+  // async get_attendance_data(req, res, next) {
+  //   try {
+  //     let query = {};
+
+  //     const role = req.user.userLogin.role;
+  //     const employeeID = req.user.userLogin.uId;
+
+  //     if (role === 'user') {
+  //       query.employeeID = employeeID;
+  //     }
+
+  //     for (const key in req.query) {
+  //       if (
+  //         key !== 'pages' &&
+  //         key !== 'limit' &&
+  //         key !== 'sortBy' &&
+  //         key !== 'orderBy' &&
+  //         Object.prototype.hasOwnProperty.call(req.query, key)
+  //       ) {
+  //         const fieldExists = Object.keys(
+  //           AttendancesModel.schema.paths
+  //         ).includes(key);
+  //         if (fieldExists) {
+  //           if (fieldExists) {
+  //             console.log(`Processing field: ${key}`);
+  //             if (key === 'punchIn' || key === 'punchOut') {
+  //               const parsedDate = parse(
+  //                 req.query[key],
+  //                 'dd/MM/yyyy',
+  //                 new Date()
+  //               );
+  //               query[key] = {
+  //                 $gte: new Date(
+  //                   parsedDate.toISOString().split('T')[0] + 'T00:00:00.000Z'
+  //                 ).toISOString(),
+  //                 $lt: new Date(
+  //                   parsedDate.getTime() + 24 * 60 * 60 * 1000 - 1
+  //                 ).toISOString(),
+  //               };
+  //               console.log(
+  //                 `Converted ${key} to ISO: ${query[key].$gte} - ${query[key].$lt}`
+  //               );
+  //             } else {
+  //               query[key] = req.query[key];
+  //               console.log(
+  //                 `Field ${key} added to search criteria: ${query[key]}`
+  //               );
+  //             }
+  //           } else {
+  //             query[key] = req.query[key];
+  //           }
+  //         } else {
+  //           return res.status(500).json({
+  //             msg: `Field '${key}' Not Found`,
+  //           });
+  //         }
+  //       }
+  //     }
+
+  //     const totalDoc = await AttendancesModel.countDocuments(query);
+
+  //     // PAGINATION
+  //     const pages = parseInt(req.query.pages) || 1;
+  //     const limit = parseInt(req.query.limit) || 10;
+  //     const skip = (pages - 1) * limit;
+  //     // SORTING BY ASCENDING OR DESCENDING
+  //     const sortBy = req.query.sortBy || 'createdAt';
+  //     const orderBy = req.query.orderBy || 1;
+
+  //     const total_Pages = Math.ceil(totalDoc / limit);
+
+  //     if (pages > total_Pages) {
+  //       throw new Error('This Page is not found!');
+  //     }
+
+  //     const data = await AttendancesModel.find(query)
+  //       .sort({ [sortBy]: orderBy })
+  //       .limit(limit)
+  //       .skip(skip);
+
+  //     const dataQuery = await AttendancesModel.find(query);
+
+  //     if (data.length === 0) {
+  //       return res.status(404).json({ message: 'Data not found' });
+  //     }
+
+  //     const totalDocs = query !== null ? dataQuery.length : totalDoc;
+
+  //     const employeeInfoResult = await getEmployeeinformation();
+
+  //     const dataWithEmployeeInfo = data.map((attendance) => {
+  //       const attendanceData = attendance.toObject();
+
+  //       // Find the matching employeeInfo by comparing employeeID
+  //       const matchingEmployeeInfo = employeeInfoResult.data.data.find(
+  //         (info) => {
+  //           return String(info.uId) === String(attendanceData.employeeID);
+  //         }
+  //       );
+
+  //       attendanceData.employeeInfo = matchingEmployeeInfo || null;
+
+  //       return attendanceData;
+  //     });
+
+  //     return res.status(200).json({
+  //       pages: pages,
+  //       limit: limit,
+  //       totalDoc: totalDocs,
+  //       data: dataWithEmployeeInfo,
+  //     });
+  //   } catch (error) {
+  //     next(error);
+  //   }
+  // }
+
   async get_attendance_data(req, res, next) {
     try {
-      // QUERY BASE ON MODEL DATA
       let query = {};
 
       const role = req.user.userLogin.role;
@@ -234,12 +350,40 @@ class AttendancesController extends BaseController {
           key !== 'orderBy' &&
           Object.prototype.hasOwnProperty.call(req.query, key)
         ) {
-          // Check if the field exists in the model
           const fieldExists = Object.keys(
             AttendancesModel.schema.paths
           ).includes(key);
           if (fieldExists) {
-            query[key] = req.query[key]; // Add to search criteria
+            console.log(`Processing field: ${key}`);
+
+            if (key === 'punchIn' || key === 'punchOut') {
+              const parsedDate = parse(
+                req.query[key],
+                'dd/MM/yyyy',
+                new Date()
+              );
+              if (!parsedDate || isNaN(parsedDate.getTime())) {
+                console.log(
+                  `Invalid date format for ${key}: ${req.query[key]}`
+                );
+                return res.status(400).json({
+                  msg: `Invalid date format for ${key}: ${req.query[key]}`,
+                });
+              }
+
+              query[key] = {
+                $gte: startOfDay(parsedDate),
+                $lt: endOfDay(parsedDate),
+              };
+              console.log(
+                `Converted ${key} to ISO: ${query[key].$gte} - ${query[key].$lt}`
+              );
+            } else {
+              query[key] = req.query[key];
+              console.log(
+                `Field ${key} added to search criteria: ${query[key]}`
+              );
+            }
           } else {
             return res.status(500).json({
               msg: `Field '${key}' Not Found`,
@@ -248,7 +392,7 @@ class AttendancesController extends BaseController {
         }
       }
 
-      const totalDoc = await AttendancesModel.countDocuments();
+      const totalDoc = await AttendancesModel.countDocuments(query);
 
       // PAGINATION
       const pages = parseInt(req.query.pages) || 1;
@@ -261,7 +405,8 @@ class AttendancesController extends BaseController {
       const total_Pages = Math.ceil(totalDoc / limit);
 
       if (pages > total_Pages) {
-        throw new Error('This Page is not found!');
+        // If the requested page is greater than total pages, default to the last page
+        return res.status(404).json({ message: 'This Page is not found!' });
       }
 
       const data = await AttendancesModel.find(query)
@@ -275,25 +420,24 @@ class AttendancesController extends BaseController {
         return res.status(404).json({ message: 'Data not found' });
       }
 
-      const totalDocs = query !== null ? dataQuery.length : totalDoc;
+      const employeeInfoResult = await getEmployeeinformation();
 
-      const dataWithEmployeeInfo = await Promise.all(
-        data.map(async (attendance) => {
-          const employeeInfoResult = await getEmployeeinformation(
-            attendance.employeeID
-          );
-          if (employeeInfoResult.success) {
-            const attendanceData = attendance.toObject();
-            attendanceData.employeeInfo = employeeInfoResult.data;
-            return attendanceData;
+      const dataWithEmployeeInfo = data.map((attendance) => {
+        const attendanceData = attendance.toObject();
+        const matchingEmployeeInfo = employeeInfoResult.data.data.find(
+          (info) => {
+            return String(info.uId) === String(attendanceData.employeeID);
           }
-        })
-      );
+        );
+        attendanceData.employeeInfo = matchingEmployeeInfo || null;
+
+        return attendanceData;
+      });
 
       return res.status(200).json({
-        pages: pages,
-        limit: limit,
-        totalDoc: totalDocs,
+        pages,
+        limit,
+        totalDoc: query !== null ? dataQuery.length : totalDoc,
         data: dataWithEmployeeInfo,
       });
     } catch (error) {

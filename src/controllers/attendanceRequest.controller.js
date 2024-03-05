@@ -102,65 +102,64 @@ class AttendanceRequestController extends BaseController {
     }
   }
 
-  async get_by_query(req, res, next) {
-    try {
-      const projection = {
-        $project: {
-          _id: 0,
-          uId: 1,
-          attendanceID: 1,
-          overtimeDuration: 1,
-          overtimeDate: 1,
-          notes: 1,
-          approvalStatus: 1,
-          'attendanceDetails.location': 1,
-          'attendanceDetails.department': 1,
-        },
-      };
+  // async get_by_query(req, res, next) {
+  //   try {
+  //     const projection = {
+  //       $project: {
+  //         _id: 0,
+  //         uId: 1,
+  //         attendanceID: 1,
+  //         overtimeDuration: 1,
+  //         overtimeDate: 1,
+  //         notes: 1,
+  //         approvalStatus: 1,
+  //         'attendanceDetails.location': 1,
+  //         'attendanceDetails.department': 1,
+  //       },
+  //     };
 
-      const pipeline = [
-        {
-          $lookup: {
-            from: 'attendances',
-            localField: 'attendanceID',
-            foreignField: 'uId',
-            as: 'attendanceDetails',
-          },
-        },
-        {
-          $match: {
-            'attendanceDetails.location': {
-              $regex: new RegExp(req.query.location, 'i'),
-            },
-            'attendanceDetails.department': {
-              $regex: new RegExp(req.query.department, 'i'),
-            },
-          },
-        },
-        projection,
-      ];
+  //     const pipeline = [
+  //       {
+  //         $lookup: {
+  //           from: 'attendances',
+  //           localField: 'attendanceID',
+  //           foreignField: 'uId',
+  //           as: 'attendanceDetails',
+  //         },
+  //       },
+  //       {
+  //         $match: {
+  //           'attendanceDetails.location': {
+  //             $regex: new RegExp(req.query.location, 'i'),
+  //           },
+  //           'attendanceDetails.department': {
+  //             $regex: new RegExp(req.query.department, 'i'),
+  //           },
+  //         },
+  //       },
+  //       projection,
+  //     ];
 
-      if (req.query.skip) {
-        pipeline.push({ $skip: parseInt(req.query.skip) });
-      }
+  //     if (req.query.skip) {
+  //       pipeline.push({ $skip: parseInt(req.query.skip) });
+  //     }
 
-      if (req.query.limit) {
-        pipeline.push({ $limit: parseInt(req.query.limit) });
-      }
+  //     if (req.query.limit) {
+  //       pipeline.push({ $limit: parseInt(req.query.limit) });
+  //     }
 
-      const result = await AttendanceRequestModel.aggregate(pipeline);
+  //     const result = await AttendanceRequestModel.aggregate(pipeline);
 
-      return res.status(200).json({
-        data: result,
-      });
-    } catch (error) {
-      next(error);
-    }
-  }
+  //     return res.status(200).json({
+  //       data: result,
+  //     });
+  //   } catch (error) {
+  //     next(error);
+  //   }
+  // }
 
   async get_all_request_data(req, res, next) {
     try {
-      // QUERY BASE ON MODEL DATA
       let query = {};
 
       const role = req.user.userLogin.role;
@@ -184,11 +183,10 @@ class AttendanceRequestController extends BaseController {
 
       const totalDoc = await AttendanceRequestModel.countDocuments();
 
-      // PAGINATION
       const pages = parseInt(req.query.pages) || 1;
       const limit = parseInt(req.query.limit) || 10;
       const skip = (pages - 1) * limit;
-      // SORTING BY ASCENDING OR DESCENDING
+
       const sortBy = req.query.sortBy || 'createdAt';
       const orderBy = req.query.orderBy || 1;
 
@@ -211,28 +209,37 @@ class AttendanceRequestController extends BaseController {
 
       const totalDocs = query !== null ? dataQuery.length : totalDoc;
 
+      const employeeInfoResult = await getEmployeeinformation();
+
       const dataWithEmployeeInfo = await Promise.all(
         data.map(async (attendance) => {
-          const employeeInfoResult = await getEmployeeinformation(
-            attendance.employeeID
-          );
+          try {
+            const latestAttendance = await AttendancesModel.findOne({
+              employeeID: attendance.employeeID,
+            })
+              .sort({ createdAt: -1 })
+              .limit(1);
 
-          // Fetch the latest attendance record for the employee
-          const latestAttendance = await AttendancesModel.findOne({
-            employeeID: attendance.employeeID,
-          })
-            .sort({ createdAt: -1 }) // Sort by createdAt in descending order to get the latest record
-            .limit(1);
+            if (latestAttendance) {
+              const attendanceData = attendance.toObject();
+              const matchingEmployeeInfo = employeeInfoResult.data.data.find(
+                (info) => String(info.uId) === String(attendanceData.employeeID)
+              );
 
-          if (employeeInfoResult.success && latestAttendance) {
-            const attendanceData = attendance.toObject();
+              if (matchingEmployeeInfo) {
+                attendanceData.location = latestAttendance.location;
+                attendanceData.department = latestAttendance.department;
+                attendanceData.employeeInfo = matchingEmployeeInfo;
+              }
 
-            // Add location and department from the latest attendance record
-            attendanceData.location = latestAttendance.location;
-            attendanceData.department = latestAttendance.department;
-
-            attendanceData.employeeInfo = employeeInfoResult.data;
-            return attendanceData;
+              return attendanceData;
+            }
+          } catch (error) {
+            console.error(
+              'Error processing employee:',
+              attendance.employeeID,
+              error
+            );
           }
         })
       );

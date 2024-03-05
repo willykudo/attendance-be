@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+import mongoose from 'mongoose';
 
 const attendanceRequestSchema = mongoose.Schema(
   {
@@ -17,8 +17,7 @@ const attendanceRequestSchema = mongoose.Schema(
     },
     attendanceID: {
       type: String,
-      required: true,
-      ref: "Attendances",
+      ref: 'Attendances',
     },
     employeeID: {
       type: String,
@@ -38,9 +37,9 @@ const attendanceRequestSchema = mongoose.Schema(
     approvalStatus: {
       isHr: {
         status: {
-          enum: ["Pending", "Approved", "Rejected"],
+          enum: ['Pending', 'Approved', 'Rejected'],
           type: String,
-          default: "Pending",
+          default: 'Pending',
         },
         comment: {
           type: String,
@@ -48,9 +47,9 @@ const attendanceRequestSchema = mongoose.Schema(
       },
       isManager: {
         status: {
-          enum: ["Pending", "Approved", "Rejected"],
+          enum: ['Pending', 'Approved', 'Rejected'],
           type: String,
-          default: "Pending",
+          default: 'Pending',
         },
         comment: {
           type: String,
@@ -65,7 +64,7 @@ const attendanceRequestSchema = mongoose.Schema(
 );
 
 const AttendanceRequestModel = mongoose.model(
-  "AttendanceRequest",
+  'AttendanceRequest',
   attendanceRequestSchema
 );
 

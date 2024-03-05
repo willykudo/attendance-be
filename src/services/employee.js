@@ -36,11 +36,11 @@ const getDataByToken = asyncHandler(async () => {
 
 let countFetch = 0;
 
-const getEmployeeinformation = asyncHandler(async (uId) => {
+const getEmployeeinformation = asyncHandler(async () => {
   try {
-    const resultData = await request.userAxios.get(`/api/user/${uId}`);
+    const resultData = await request.userAxios.get(`/api/user`);
     countFetch++;
-    console.log(countFetch);
+    console.log('employeeData called times: ', countFetch);
     return { success: true, data: resultData.data };
   } catch (error) {
     console.log(error);
