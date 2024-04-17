@@ -1,8 +1,9 @@
+import { v4 } from "uuid";
+
 import AttendanceOvertime from "../models/attendanceOvertime.model.js";
 import AttendanceModel from "../models/attendances.model.js";
-import BaseController from "./base.controller.js";
 
-import { v4 } from "uuid";
+import BaseController from "./base.controller.js";
 
 class AttendanceOvertimeController extends BaseController {
   constructor() {

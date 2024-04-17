@@ -1,12 +1,17 @@
+import { v4 } from 'uuid';
+
 import AttendancesModel from '../models/attendances.model.js';
-import BaseController from './base.controller.js';
 import { customizeError } from '../utils/common.js';
 import { getEmployeeinformation } from '../services/employee.js';
-import { parse, format, startOfDay, endOfDay } from 'date-fns';
-
+import {
+  parse,
+  format,
+  startOfDay,
+  endOfDay
+} from 'date-fns';
 import { uploadFile } from '../utils/aws.js';
 
-import { v4 } from 'uuid';
+import BaseController from './base.controller.js';
 
 class AttendancesController extends BaseController {
   constructor() {
@@ -335,11 +340,41 @@ class AttendancesController extends BaseController {
     try {
       let query = {};
 
-      const role = req.user.userLogin.role;
+      const role = req.user.userLogin.role[0];
       const employeeID = req.user.userLogin.uId;
 
-      if (role === 'user') {
+      if (role === 'admin') {
+        // Admin dapat melihat semua data tanpa batasan
+      } else if (role === 'supervisor') {
+        // Dapatkan ID pengguna dari user saat ini
+        const userID = req.user.userLogin.uId;
+
+        // Temukan entri userInformation yang sesuai
+        const userInformation = await UserInformation.findOne({ userID });
+
+        // Pastikan entri userInformation ditemukan
+        if (!userInformation) {
+          return res.status(404).json({ message: 'User information not found' });
+        }
+
+        // Dapatkan supervisor ID dari entri userInformation
+        const supervisorID = userInformation.reportTo;
+
+        // Temukan semua karyawan yang memiliki supervisor dengan ID supervisor tersebut
+        const employeesUnderSupervisor = await UserInformation.find({ reportTo: supervisorID }, '_id');
+
+        // Dapatkan daftar ID karyawan dari hasil pencarian
+        const employeeIDs = employeesUnderSupervisor.map(employee => employee._id);
+
+        // Termasukkan ID supervisor sendiri
+        employeeIDs.push(supervisorID);
+
+        // Menambahkan kondisi untuk mendapatkan data kehadiran dari supervisor dan bawahannya
+        query.employeeID = { $in: employeeIDs };
+      } else if (role === 'employee') {
         query.employeeID = employeeID;
+      } else {
+        return res.status(403).json({ message: 'Access forbidden. Only supervisors, users, and admins are allowed.' });
       }
 
       for (const key in req.query) {
@@ -348,6 +383,7 @@ class AttendancesController extends BaseController {
           key !== 'limit' &&
           key !== 'sortBy' &&
           key !== 'orderBy' &&
+          key !== 'role' &&
           Object.prototype.hasOwnProperty.call(req.query, key)
         ) {
           const fieldExists = Object.keys(
@@ -413,14 +449,18 @@ class AttendancesController extends BaseController {
         .sort({ [sortBy]: orderBy })
         .limit(limit)
         .skip(skip);
+      // console.log(data);
 
       const dataQuery = await AttendancesModel.find(query);
+      // console.log(dataQuery);
 
+      // Give empty data
       if (data.length === 0) {
         return res.status(404).json({ message: 'Data not found' });
       }
 
       const employeeInfoResult = await getEmployeeinformation();
+      // console.log(employeeInfoResult);
 
       const dataWithEmployeeInfo = data.map((attendance) => {
         const attendanceData = attendance.toObject();
@@ -431,6 +471,7 @@ class AttendancesController extends BaseController {
         );
         attendanceData.employeeInfo = matchingEmployeeInfo || null;
 
+        console.log(attendanceData);
         return attendanceData;
       });
 

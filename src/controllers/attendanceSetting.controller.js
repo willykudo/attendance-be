@@ -1,9 +1,10 @@
-import AttendanceSettingModel from "../models/attendanceSetting.model.js";
-import BaseController from "./base.controller.js";
+import { v4 } from "uuid";
 
+import AttendanceSettingModel from "../models/attendanceSetting.model.js";
 import { customizeError } from "../utils/common.js";
 
-import { v4 } from "uuid";
+import BaseController from "./base.controller.js";
+
 
 class AttendanceSetting extends BaseController {
   constructor() {
