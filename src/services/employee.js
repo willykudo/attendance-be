@@ -4,7 +4,7 @@ import request from '../utils/request.js';
 
 const getDataById = asyncHandler(async (uId) => {
   try {
-    const resultData = await request.userAxios.get(`/api/user/${uId}`);
+    const resultData = await request.employeeAxios.get(`/api/user/${uId}`);
     return { success: true, data: resultData.data };
   } catch (error) {
     console.log(error);
@@ -20,7 +20,7 @@ const getDataById = asyncHandler(async (uId) => {
 
 const getDataByToken = asyncHandler(async () => {
   try {
-    const resultData = await request.userAxios.get(`/api/user/checkToken`);
+    const resultData = await request.employeeAxios.get(`/api/user/checkToken`);
     return { success: true, data: resultData.data };
   } catch (error) {
     console.log(error);
@@ -38,7 +38,7 @@ let countFetch = 0;
 
 const getEmployeeinformation = asyncHandler(async () => {
   try {
-    const resultData = await request.userAxios.get(`/api/user`);
+    const resultData = await request.employeeAxios.get(`/api/user`);
     countFetch++;
     console.log('employeeData called times: ', countFetch);
     return { success: true, data: resultData.data };
@@ -63,7 +63,7 @@ const getEmployeeInformationWithCache = asyncHandler(async (employeeID) => {
 
   try {
     // Get data from cache
-    const resultData = await request.userAxios.get(`/api/user/${employeeID}`);
+    const resultData = await request.employeeAxios.get(`/api/user/${employeeID}`);
 
     // Store data to cache
     employeeInfoCache[employeeID] = {

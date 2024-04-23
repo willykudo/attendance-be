@@ -6,8 +6,5 @@ This README would normally document whatever steps are necessary to get your app
 
 * Checkout to your branch: example dev
 * Run "npm install" or "yarn install"
-* Run "npm run decrypt or yarn decrypt"
+* Run "npm run decrypt or yarn decrypt", contact admin for password
 * Run "npm start" or "yarn start"
-
-### Env Dev Password ###
-bluesiloDev
