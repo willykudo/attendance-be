@@ -11,7 +11,7 @@ const isAuthorized = asyncHandler(async (req, res, next) => {
       req.headers.authorization.startsWith('Bearer')
     ) {
       token = req.headers.authorization;
-      request.userAxios.defaults.headers.common['authorization'] = token;
+      request.employeeAxios.defaults.headers.common['authorization'] = token;
 
       const { success, data } = await getDataByToken();
 
