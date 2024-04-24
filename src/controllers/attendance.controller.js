@@ -91,7 +91,8 @@ class AttendancesController extends BaseController {
       const punchOutTime = new Date();
       const totalHoursWorked = (punchOutTime - punchInTime) / (1000 * 60 * 60);
 
-      const status = totalHoursWorked > 8 ? 'On Time' : 'Late';
+      const status = totalHoursWorked > 8 ? 'OnTime' : 'Late';
+
 
       const upload = await uploadFile(req.file);
 
@@ -470,6 +471,10 @@ class AttendancesController extends BaseController {
           }
         );
         attendanceData.employeeInfo = matchingEmployeeInfo || null;
+
+        if (!attendanceData.punchIn || !attendanceData.punchOut) {
+          attendanceData.status = "NoPunchInOut";
+        }
 
         console.log(attendanceData);
         return attendanceData;
