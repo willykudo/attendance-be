@@ -36,8 +36,7 @@ class AttendanceRequestController extends BaseController {
       });
 
       const createdData = await newData.save();
-
-      console.log(createdData);
+      console.log('Created attendance request:', createdData);
 
       if (!createdData) {
         throw customizeError(400, 'Create data failed');
@@ -45,9 +44,11 @@ class AttendanceRequestController extends BaseController {
 
       return res.status(201).json({ data: createdData });
     } catch (error) {
+      console.error('Error creating attendance request:', error.message);
       next(error);
     }
   }
+
 
   async get_by_id(req, res, next) {
     try {

@@ -11,6 +11,17 @@ const attendanceSchema = mongoose.Schema(
       type: String,
       required: true,
     },
+    employeeInfo: {
+      firstName: {
+        type: String,
+      },
+      lastName: {
+        type: String,
+      },
+      jobLevel: {
+        type: String,
+      }
+    },
     scheduleID: {
       type: String,
       required: true,

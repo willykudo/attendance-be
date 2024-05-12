@@ -15,6 +15,9 @@ const isAuthorized = asyncHandler(async (req, res, next) => {
 
       const { success, data } = await getDataByToken();
 
+      // console.log(success);
+      // console.log(token);
+
       if (!success) {
         res.status(401);
         throw new Error("User don't have access");

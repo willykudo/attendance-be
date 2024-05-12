@@ -40,7 +40,7 @@ const getEmployeeinformation = asyncHandler(async () => {
   try {
     const resultData = await request.employeeAxios.get(`/api/user`);
     countFetch++;
-    console.log('employeeData called times: ', countFetch);
+    // console.log('employeeData called times: ', countFetch);
     return { success: true, data: resultData.data };
   } catch (error) {
     console.log(error);

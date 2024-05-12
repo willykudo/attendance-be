@@ -343,6 +343,7 @@ class AttendancesController extends BaseController {
 
       const role = req.user.userLogin.role[0];
       const employeeID = req.user.userLogin.uId;
+      // console.log(role)
 
       if (role === 'admin') {
         // Admin dapat melihat semua data tanpa batasan
@@ -476,7 +477,7 @@ class AttendancesController extends BaseController {
           attendanceData.status = "NoPunchInOut";
         }
 
-        console.log(attendanceData);
+        // console.log(attendanceData);
         return attendanceData;
       });
 
@@ -501,6 +502,46 @@ class AttendancesController extends BaseController {
       return res.status(200).json({ message: 'Data deleted successfully' });
     } catch (error) {
       next(error);
+    }
+  }
+
+  async update_attendance(req, res, next) {
+    const { id } = req.params;
+
+    try {
+      // Check if the provided ID is valid
+      if (!id) {
+        return res.status(400).json({ error: 'Invalid ID' });
+      }
+
+      // Validate that the updated data is not empty
+      const updatedData = req.body;
+      if (Object.keys(updatedData).length === 0) {
+        return res.status(400).json({ error: 'No data provided for update' });
+      }
+
+      // Find the attendance record by ID and update it
+      const updatedRecord = await AttendancesModel.findOneAndUpdate(
+        { uId: id },
+        { $set: updatedData },
+        { new: true } // Return the updated document
+      );
+
+      // Check if the record exists and updated successfully
+      if (!updatedRecord) {
+        return res.status(404).json({ error: 'Attendance record not found' });
+      }
+
+      // Log the updated record
+      console.log('Attendance record updated successfully:', updatedRecord);
+
+      // Send the updated record as response
+      return res.status(200).json({ data: updatedRecord });
+    } catch (error) {
+      // Handle unexpected errors
+      console.error('Error updating attendance:', error);
+      // return res.status(500).json({ error: 'Internal server error' });
+      next(error)
     }
   }
 }
