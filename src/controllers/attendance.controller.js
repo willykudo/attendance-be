@@ -343,36 +343,27 @@ class AttendancesController extends BaseController {
 
       const role = req.user.userLogin.role[0];
       const employeeID = req.user.userLogin.uId;
+      const userInformationID = req.user.userLogin.userInformationID;
       // console.log(role)
+      // console.log(employeeID)
+      // console.log(userInformationID)
 
       if (role === 'admin') {
         // Admin dapat melihat semua data tanpa batasan
       } else if (role === 'supervisor') {
-        // Dapatkan ID pengguna dari user saat ini
-        const userID = req.user.userLogin.uId;
 
-        // Temukan entri userInformation yang sesuai
-        const userInformation = await UserInformation.findOne({ userID });
+        const getAllEmployee = await getEmployeeinformation();
+        // console.log(getAllEmployee.data.data)
+        // const getAllUserInformation = await getEmployeeUserinformation();
+        const filteredUser = getAllEmployee.data.data.filter(user => user.userInformation.employeementDetail.reportTo === userInformationID);
 
-        // Pastikan entri userInformation ditemukan
-        if (!userInformation) {
-          return res.status(404).json({ message: 'User information not found' });
-        }
+        const IDs = filteredUser.map(user => user.uId);
+        IDs.push(employeeID); // Menambahkan employeeID ke dalam array IDs
+        // console.log(IDs);
 
-        // Dapatkan supervisor ID dari entri userInformation
-        const supervisorID = userInformation.reportTo;
+        // Menggunakan IDs dalam pembentukan query
+        query.employeeID = { $in: IDs }; // Menggunakan operator $in untuk mencocokkan employeeID dalam IDs
 
-        // Temukan semua karyawan yang memiliki supervisor dengan ID supervisor tersebut
-        const employeesUnderSupervisor = await UserInformation.find({ reportTo: supervisorID }, '_id');
-
-        // Dapatkan daftar ID karyawan dari hasil pencarian
-        const employeeIDs = employeesUnderSupervisor.map(employee => employee._id);
-
-        // Termasukkan ID supervisor sendiri
-        employeeIDs.push(supervisorID);
-
-        // Menambahkan kondisi untuk mendapatkan data kehadiran dari supervisor dan bawahannya
-        query.employeeID = { $in: employeeIDs };
       } else if (role === 'employee') {
         query.employeeID = employeeID;
       } else {
@@ -477,7 +468,7 @@ class AttendancesController extends BaseController {
           attendanceData.status = "NoPunchInOut";
         }
 
-        // console.log(attendanceData);
+        console.log(attendanceData);
         return attendanceData;
       });
 
@@ -533,7 +524,7 @@ class AttendancesController extends BaseController {
       }
 
       // Log the updated record
-      console.log('Attendance record updated successfully:', updatedRecord);
+      // console.log('Attendance record updated successfully:', updatedRecord);
 
       // Send the updated record as response
       return res.status(200).json({ data: updatedRecord });

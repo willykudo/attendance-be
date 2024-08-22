@@ -23,7 +23,8 @@ const getDataByToken = asyncHandler(async () => {
     const resultData = await request.employeeAxios.get(`/api/user/checkToken`);
     return { success: true, data: resultData.data };
   } catch (error) {
-    console.log(error);
+    // console.log(error);
+    console.error('Error in getDataByToken:', error.response ? error.response.data : error.message);
     return {
       success: false,
       status: error?.response?.status ? error?.response?.status : 500,
@@ -40,6 +41,7 @@ const getEmployeeinformation = asyncHandler(async () => {
   try {
     const resultData = await request.employeeAxios.get(`/api/user`);
     countFetch++;
+    // console.log(resultData)
     // console.log('employeeData called times: ', countFetch);
     return { success: true, data: resultData.data };
   } catch (error) {
@@ -53,6 +55,24 @@ const getEmployeeinformation = asyncHandler(async () => {
     };
   }
 });
+
+// const getEmployeeUserinformation = asyncHandler(async () => {
+//   try {
+//     const resultData = await request.employeeAxios.get(`/api/userInformation`);
+//     countFetch++;
+//     // console.log('employeeData called times: ', countFetch);
+//     return { success: true, data: resultData.data };
+//   } catch (error) {
+//     console.log(error);
+//     return {
+//       success: false,
+//       status: error?.response?.status ? error?.response?.status : 500,
+//       message: error?.response?.data?.message
+//         ? error?.response?.data?.message
+//         : 'Failed get data',
+//     };
+//   }
+// });
 
 const employeeInfoCache = {};
 
@@ -89,4 +109,5 @@ export {
   getDataByToken,
   getEmployeeinformation,
   getEmployeeInformationWithCache,
+  // getEmployeeUserinformation
 };

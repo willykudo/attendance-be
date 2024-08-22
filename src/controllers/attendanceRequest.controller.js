@@ -165,11 +165,41 @@ class AttendanceRequestController extends BaseController {
     try {
       let query = {};
 
-      const role = req.user.userLogin.role;
+      const role = req.user.userLogin.role[0];
       const employeeID = req.user.userLogin.uId;
 
-      if (role === 'user') {
+      if (role === 'admin') {
+        // Admin dapat melihat semua data tanpa batasan
+      } else if (role === 'supervisor') {
+        // Dapatkan ID pengguna dari user saat ini
+        const userID = req.user.userLogin.uId;
+
+        // Temukan entri userInformation yang sesuai
+        const userInformation = await UserInformation.findOne({ userID });
+
+        // Pastikan entri userInformation ditemukan
+        if (!userInformation) {
+          return res.status(404).json({ message: 'User information not found' });
+        }
+
+        // Dapatkan supervisor ID dari entri userInformation
+        const supervisorID = userInformation.reportTo;
+
+        // Temukan semua karyawan yang memiliki supervisor dengan ID supervisor tersebut
+        const employeesUnderSupervisor = await UserInformation.find({ reportTo: supervisorID }, '_id');
+
+        // Dapatkan daftar ID karyawan dari hasil pencarian
+        const employeeIDs = employeesUnderSupervisor.map(employee => employee._id);
+
+        // Termasukkan ID supervisor sendiri
+        employeeIDs.push(supervisorID);
+
+        // Menambahkan kondisi untuk mendapatkan data kehadiran dari supervisor dan bawahannya
+        query.employeeID = { $in: employeeIDs };
+      } else if (role === 'employee') {
         query.employeeID = employeeID;
+      } else {
+        return res.status(403).json({ message: 'Access forbidden. Only supervisors, users, and admins are allowed.' });
       }
 
       for (const key in req.query) {
